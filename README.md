@@ -137,7 +137,3 @@ uv run ruff check fulcrum_sdk tests
 # Run type checking
 uv run ty check
 ```
-
-## License
-
-MIT
