@@ -137,10 +137,11 @@ class DbPayload(BaseModel):
 class ModelPayload(BaseModel):
     """Payload structure for model kind.
 
-    Use for Pydantic model validation (shallow summaries only).
+    Use to display Pydantic model data as intermediate steps.
     """
 
     model_name: str
+    data: dict[str, Any] | None = None
     input_summary: str | None = None
     output_summary: str | None = None
 

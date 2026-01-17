@@ -328,17 +328,20 @@ class DispatchClient:
         model: BaseModel,
         input_summary: str | None = None,
     ) -> bool:
-        """Dispatch a Pydantic model validation event.
+        """Dispatch a Pydantic model display event.
 
         Args:
-            summary: Human-readable summary of the model operation.
-            model: The Pydantic model instance (class name will be extracted).
-            input_summary: Optional brief description of the input.
+            summary: Human-readable summary of what this model represents.
+            model: The Pydantic model instance to display.
+            input_summary: Optional brief description of the input source.
 
         Returns:
             True if dispatch succeeded, False otherwise.
         """
-        payload: dict[str, Any] = {"model_name": model.__class__.__name__}
+        payload: dict[str, Any] = {
+            "model_name": model.__class__.__name__,
+            "data": model.model_dump(mode="json"),
+        }
         if input_summary is not None:
             payload["input_summary"] = input_summary
         return self.dispatch("model", summary, payload)

@@ -342,7 +342,7 @@ class TestConvenienceMethods:
 
     @respx.mock
     def test_dispatch_model(self):
-        """Should dispatch model event."""
+        """Should dispatch model event with data."""
         route = respx.post("http://test/dispatch").mock(return_value=httpx.Response(200))
 
         class UserProfile(BaseModel):
@@ -363,6 +363,10 @@ class TestConvenienceMethods:
         assert '"kind":"model"' in body
         assert "UserProfile" in body
         assert "Raw user data" in body
+        # Verify data field contains serialized model values
+        assert '"data":' in body
+        assert '"name":"Test"' in body
+        assert '"email":"test@example.com"' in body
 
     @respx.mock
     def test_dispatch_external_ref(self):
