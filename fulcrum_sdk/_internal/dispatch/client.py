@@ -70,7 +70,8 @@ class DispatchClient:
 
         Required environment variables:
             FULCRUM_DISPATCH_URL: The dispatch API endpoint URL.
-            FULCRUM_DISPATCH_TOKEN: The authentication token.
+            FULCRUM_RUN_TOKEN: The authentication token (preferred).
+            FULCRUM_DISPATCH_TOKEN: Deprecated fallback for auth token.
             FULCRUM_TICKET_UUID: The ticket UUID.
             FULCRUM_RUN_UUID: The run UUID.
 
@@ -85,7 +86,10 @@ class DispatchClient:
             returns a no-op client (all dispatch methods return False).
         """
         dispatch_url = os.environ.get("FULCRUM_DISPATCH_URL")
-        dispatch_token = os.environ.get("FULCRUM_DISPATCH_TOKEN")
+        # Prefer FULCRUM_RUN_TOKEN, fallback to deprecated FULCRUM_DISPATCH_TOKEN
+        dispatch_token = os.environ.get("FULCRUM_RUN_TOKEN") or os.environ.get(
+            "FULCRUM_DISPATCH_TOKEN"
+        )
         ticket_uuid = os.environ.get("FULCRUM_TICKET_UUID")
         run_uuid = os.environ.get("FULCRUM_RUN_UUID")
         message_uuid = os.environ.get("FULCRUM_MESSAGE_UUID")

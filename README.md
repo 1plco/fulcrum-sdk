@@ -58,21 +58,40 @@ client.dispatch_text("Processing started")
 
 ## Environment Variables
 
-The dispatch client is configured via environment variables:
+The SDK clients are configured via environment variables:
 
-### Required
+### Authentication
 
+- `FULCRUM_RUN_TOKEN` - Authentication token (preferred)
+- `FULCRUM_DISPATCH_TOKEN` - Deprecated, use `FULCRUM_RUN_TOKEN` instead
+
+### Dispatch Client
+
+Required:
 - `FULCRUM_DISPATCH_URL` - The dispatch API endpoint URL
-- `FULCRUM_DISPATCH_TOKEN` - Authentication token
+- `FULCRUM_RUN_TOKEN` or `FULCRUM_DISPATCH_TOKEN` - Authentication token
 - `FULCRUM_TICKET_UUID` - The ticket UUID for this session
 - `FULCRUM_RUN_UUID` - The run UUID for this execution
 
-### Optional
-
+Optional:
 - `FULCRUM_MESSAGE_UUID` - The message UUID (if applicable)
 - `FULCRUM_DISPATCH_DEBUG` - Set to "1" to enable debug logging
 - `FULCRUM_DISPATCH_TIMEOUT_MS` - Request timeout in milliseconds (default: 1500)
 - `FULCRUM_DISPATCH_MAX_BYTES` - Maximum payload size (default: 65536)
+
+### Improvements Client
+
+Required:
+- `FULCRUM_IMPROVEMENTS_URL` - The improvements API endpoint URL
+- `FULCRUM_RUN_TOKEN` or `FULCRUM_DISPATCH_TOKEN` - Authentication token
+- `FULCRUM_RUN_UUID` - The run UUID for this execution
+
+Optional:
+- `FULCRUM_PROJECT_UUID` - The project UUID
+- `FULCRUM_TICKET_UUID` - The ticket UUID
+- `FULCRUM_IMPROVEMENTS_DEBUG` - Set to "1" to enable debug logging
+- `FULCRUM_IMPROVEMENTS_TIMEOUT_MS` - Request timeout in milliseconds (default: 1500)
+- `FULCRUM_IMPROVEMENTS_MAX_BYTES` - Maximum payload size (default: 65536)
 
 ## API Reference
 
@@ -111,6 +130,34 @@ Dispatch a database operation event.
 #### `dispatch_model(summary, model, input_summary=None) -> bool`
 
 Dispatch a Pydantic model validation event.
+
+### ImprovementsClient (System-Level)
+
+Located in `fulcrum_sdk._internal.improvements`.
+
+#### `from_env() -> ImprovementsClient`
+
+Create a client from environment variables. Returns a no-op client if required variables are missing.
+
+#### `list_improvements(project_uuid=None) -> list[Improvement]`
+
+List improvements for the current run or project. Returns empty list on any error.
+
+#### `create_improvement(title, description=None, dedupe_key=None, status='open') -> bool`
+
+Create a new improvement. Returns `True` on success, `False` on any error.
+
+#### `update_improvement(uuid, **fields) -> bool`
+
+Update an existing improvement (title, description, status). Returns `True` on success, `False` on any error.
+
+#### `delete_improvement(uuid) -> bool`
+
+Delete an improvement. Returns `True` on success, `False` on any error.
+
+#### `emit_improvement_event(improvement_uuid, action, payload=None) -> bool`
+
+Emit an event for an improvement. Returns `True` on success, `False` on any error.
 
 ## Best-Effort Design
 

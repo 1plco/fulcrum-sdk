@@ -101,6 +101,33 @@ class TestDispatchClientFromEnv:
         with patch.dict(os.environ, env, clear=True), pytest.raises(ValueError):
             DispatchClient.from_env()
 
+    def test_from_env_prefers_run_token(self):
+        """Should prefer FULCRUM_RUN_TOKEN over FULCRUM_DISPATCH_TOKEN."""
+        env = {
+            "FULCRUM_DISPATCH_URL": "http://localhost:3000/api/dispatch",
+            "FULCRUM_RUN_TOKEN": "preferred-token",
+            "FULCRUM_DISPATCH_TOKEN": "deprecated-token",
+            "FULCRUM_TICKET_UUID": "ticket-123",
+            "FULCRUM_RUN_UUID": "run-456",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            client = DispatchClient.from_env()
+            assert client.enabled is True
+            assert client._dispatch_token == "preferred-token"
+
+    def test_from_env_fallback_to_dispatch_token(self):
+        """Should fallback to FULCRUM_DISPATCH_TOKEN when RUN_TOKEN is missing."""
+        env = {
+            "FULCRUM_DISPATCH_URL": "http://localhost:3000/api/dispatch",
+            "FULCRUM_DISPATCH_TOKEN": "fallback-token",
+            "FULCRUM_TICKET_UUID": "ticket-123",
+            "FULCRUM_RUN_UUID": "run-456",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            client = DispatchClient.from_env()
+            assert client.enabled is True
+            assert client._dispatch_token == "fallback-token"
+
 
 class TestDispatchClientNoOp:
     """Tests for no-op client behavior."""
