@@ -26,22 +26,41 @@ dependencies = [
 
 ## Usage
 
-### Public API (Coming Soon)
+### Public Runtime API
+
+Use `FulcrumClient.from_env()` inside team-ticket and project-ticket runtimes.
+The runtime should receive `FULCRUM_API_BASE_URL` and
+`FULCRUM_RUNTIME_TOKEN` from Fulcrum.
 
 ```python
 from fulcrum_sdk import FulcrumClient
 
-client = FulcrumClient(api_key="your-api-key")
+client = FulcrumClient.from_env()
 
-# Submit tickets
-ticket = client.tickets.create(
-    title="Data extraction request",
-    description="Extract all invoices from Q4 2024"
-)
+# List projects linked to the current team.
+projects = client.teams.list_projects("team-uuid")
 
-# Manage SOPs
-sops = client.sops.list(project_id="proj-123")
+# Load SOP metadata for a project.
+sops = client.sops.list("project-uuid")
+
+# Create and execute a project ticket.
+created = client.tickets.create("project-uuid", "Run the billing SOP")
+ticket = created["ticket"]
+message = created["message"]
+execution = client.tickets.execute("project-uuid", ticket["uuid"], message["uuid"])
 ```
+
+The public client exposes typed resource groups for current v1 routes:
+
+- `client.projects`, `client.project_members`, `client.teams`
+- `client.sops`, `client.sop_sync`
+- `client.tickets`, `client.team_tickets`
+- `client.internal_db`, `client.resources`
+- `client.improvements`, `client.unfurl_runs`
+- `client.github`, `client.dashboard`, `client.logs`, `client.operator`
+
+`client.request(method, path, json=None, params=None, stream=False)` remains
+available for new `/api/v1` routes before a typed wrapper exists.
 
 ### System-Level APIs
 
@@ -62,8 +81,19 @@ The SDK clients are configured via environment variables:
 
 ### Authentication
 
+- `FULCRUM_API_BASE_URL` - Base URL for `/api/v1` runtime calls
+- `FULCRUM_RUNTIME_TOKEN` - Team or project runtime bearer token
 - `FULCRUM_RUN_TOKEN` - Authentication token (preferred)
 - `FULCRUM_DISPATCH_TOKEN` - Deprecated, use `FULCRUM_RUN_TOKEN` instead
+
+Runtime tokens are enforced server-side. The SDK does not decide team or project
+authorization locally; disallowed calls return Fulcrum API errors such as 403.
+
+Team-ticket runtimes may also receive:
+
+- `FULCRUM_TEAM_UUID` - Current team UUID
+- `FULCRUM_TEAM_TICKET_UUID` - Current team ticket UUID
+- `FULCRUM_TEAM_TICKET_RUN_UUID` - Current team ticket run UUID
 
 ### Dispatch Client
 
@@ -158,6 +188,26 @@ Delete an improvement. Returns `True` on success, `False` on any error.
 #### `emit_improvement_event(improvement_uuid, action, payload=None) -> bool`
 
 Emit an event for an improvement. Returns `True` on success, `False` on any error.
+
+### FulcrumClient (Public Runtime API)
+
+Located in `fulcrum_sdk`.
+
+#### `from_env() -> FulcrumClient`
+
+Create a v1 API client from `FULCRUM_API_BASE_URL` and
+`FULCRUM_RUNTIME_TOKEN`.
+
+#### `request(method, path, json=None, params=None, headers=None, stream=False)`
+
+Call any `/api/v1` route. JSON routes return unwrapped response data. Streaming
+routes return an `httpx.Response` and should be closed by the caller.
+
+#### Team Runtime Examples
+
+See `examples/team_runtime.py` for syntax-checkable examples covering team
+project listing, SOP loading, project ticket execution, run polling, and team
+ticket message/event append.
 
 ## Best-Effort Design
 

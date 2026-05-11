@@ -25,6 +25,7 @@ from fulcrum_sdk.resources import ResourcesResource
 from fulcrum_sdk.sop_sync import SopSyncResource
 from fulcrum_sdk.sops import SopsResource
 from fulcrum_sdk.team_tickets import TeamTicketsResource
+from fulcrum_sdk.teams import TeamsResource
 from fulcrum_sdk.tickets import TicketsResource
 from fulcrum_sdk.unfurl_runs import UnfurlRunsResource
 
@@ -76,6 +77,7 @@ class FulcrumClient:
         self._sop_sync: SopSyncResource | None = None
         self._sops: SopsResource | None = None
         self._team_tickets: TeamTicketsResource | None = None
+        self._teams: TeamsResource | None = None
         self._tickets: TicketsResource | None = None
         self._unfurl_runs: UnfurlRunsResource | None = None
 
@@ -167,6 +169,12 @@ class FulcrumClient:
         if self._team_tickets is None:
             self._team_tickets = TeamTicketsResource(client=self)
         return self._team_tickets
+
+    @property
+    def teams(self) -> TeamsResource:
+        if self._teams is None:
+            self._teams = TeamsResource(client=self)
+        return self._teams
 
     def request(
         self,

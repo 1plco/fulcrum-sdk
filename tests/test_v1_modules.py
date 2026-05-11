@@ -14,6 +14,7 @@ from fulcrum_sdk import (
     ProjectMembersResource,
     ResourcesResource,
     SopSyncResource,
+    TeamsResource,
     TeamTicketsResource,
     UnfurlRunsResource,
 )
@@ -32,6 +33,7 @@ def test_client_exposes_remaining_v1_resources():
     assert isinstance(client.logs, LogsResource)
     assert isinstance(client.operator, OperatorResource)
     assert isinstance(client.internal_db, InternalDbResource)
+    assert isinstance(client.teams, TeamsResource)
     assert isinstance(client.team_tickets, TeamTicketsResource)
 
 
@@ -48,11 +50,12 @@ def test_expected_route_groups_have_sdk_properties():
         "operator": client.operator,
         "resources": client.resources,
         "sop-sync": client.sop_sync,
+        "teams": client.teams,
         "team-tickets": client.team_tickets,
         "unfurl-runs": client.unfurl_runs,
     }
 
-    assert sorted(route_groups) == [
+    assert set(route_groups) == {
         "dashboard",
         "github",
         "improvement-runs",
@@ -63,9 +66,10 @@ def test_expected_route_groups_have_sdk_properties():
         "operator",
         "resources",
         "sop-sync",
+        "teams",
         "team-tickets",
         "unfurl-runs",
-    ]
+    }
 
 
 @respx.mock
@@ -198,3 +202,18 @@ def test_operator_and_team_ticket_routes():
     assert client.team_tickets.execute("team-1", "ticket-1") == {"runUuid": "run-1"}
     assert operator_route.called
     assert team_route.calls.last.request.content == b"{}"
+
+
+@respx.mock
+def test_teams_resource_lists_team_projects():
+    route = respx.get("http://test/api/v1/teams/team-1/projects").mock(
+        return_value=httpx.Response(
+            200,
+            json={"ok": True, "data": [{"uuid": "project-1"}]},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="token")
+
+    assert client.teams.list_projects("team-1") == {"data": [{"uuid": "project-1"}]}
+    assert route.called

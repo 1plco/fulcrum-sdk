@@ -24,6 +24,7 @@ from fulcrum_sdk.resources import ResourcesResource
 from fulcrum_sdk.sop_sync import SopSyncResource
 from fulcrum_sdk.sops import SopsResource
 from fulcrum_sdk.team_tickets import TeamTicketsResource
+from fulcrum_sdk.teams import TeamsResource
 from fulcrum_sdk.tickets import TicketsResource
 from fulcrum_sdk.unfurl_runs import UnfurlRunsResource
 
@@ -44,6 +45,7 @@ __all__ = [
     "SopSyncResource",
     "SopsResource",
     "TeamTicketsResource",
+    "TeamsResource",
     "TicketsResource",
     "UnfurlRunsResource",
     "__version__",
