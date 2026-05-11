@@ -74,18 +74,16 @@ def test_expected_route_groups_have_sdk_properties():
 
 @respx.mock
 def test_project_members_resource_updates_and_removes_members():
-    update_route = respx.patch(
-        "http://test/api/v1/projects/project-1/members/user-1"
-    ).mock(return_value=httpx.Response(200, json={"ok": True, "data": {"role": "user"}}))
-    delete_route = respx.delete(
-        "http://test/api/v1/projects/project-1/members/user-1"
-    ).mock(return_value=httpx.Response(200, json={"ok": True, "data": {"deleted": True}}))
+    update_route = respx.patch("http://test/api/v1/projects/project-1/members/user-1").mock(
+        return_value=httpx.Response(200, json={"ok": True, "data": {"role": "user"}})
+    )
+    delete_route = respx.delete("http://test/api/v1/projects/project-1/members/user-1").mock(
+        return_value=httpx.Response(200, json={"ok": True, "data": {"deleted": True}})
+    )
 
     client = FulcrumClient(base_url="http://test", api_key="token")
 
-    assert client.project_members.update("project-1", "user-1", role="user") == {
-        "role": "user"
-    }
+    assert client.project_members.update("project-1", "user-1", role="user") == {"role": "user"}
     assert client.project_members.remove("project-1", "user-1") == {"deleted": True}
     assert update_route.calls.last.request.content == b'{"role":"user"}'
     assert delete_route.called
@@ -96,9 +94,9 @@ def test_resources_and_internal_db_routes():
     create_route = respx.post("http://test/api/v1/projects/project-1/resources").mock(
         return_value=httpx.Response(201, json={"ok": True, "data": {"uuid": "res-1"}})
     )
-    query_route = respx.post(
-        "http://test/api/v1/projects/project-1/internal-db/query"
-    ).mock(return_value=httpx.Response(200, json={"ok": True, "data": {"rows": []}}))
+    query_route = respx.post("http://test/api/v1/projects/project-1/internal-db/query").mock(
+        return_value=httpx.Response(200, json={"ok": True, "data": {"rows": []}})
+    )
 
     client = FulcrumClient(base_url="http://test", api_key="token")
     created = client.resources.create_sql(
@@ -126,15 +124,13 @@ def test_github_logs_dashboard_and_sop_sync_routes():
     costs_route = respx.get("http://test/api/v1/projects/project-1/dashboard/costs").mock(
         return_value=httpx.Response(200, json={"ok": True, "data": {"total": 1}})
     )
-    sop_sync_route = respx.post(
-        "http://test/api/v1/projects/project-1/sop-sync/pull"
-    ).mock(return_value=httpx.Response(200, json={"ok": True, "data": {"pulled": True}}))
+    sop_sync_route = respx.post("http://test/api/v1/projects/project-1/sop-sync/pull").mock(
+        return_value=httpx.Response(200, json={"ok": True, "data": {"pulled": True}})
+    )
 
     client = FulcrumClient(base_url="http://test", api_key="token")
     assert client.github.list_repositories("project-1", org="acme") == {"data": []}
-    assert client.logs.list("project-1", sources=["ticket"], limit=10) == {
-        "items": []
-    }
+    assert client.logs.list("project-1", sources=["ticket"], limit=10) == {"items": []}
     assert client.dashboard.costs("project-1") == {"total": 1}
     assert client.sop_sync.pull("project-1") == {"pulled": True}
     assert repos_route.calls.last.request.url.params["org"] == "acme"
@@ -146,9 +142,7 @@ def test_github_logs_dashboard_and_sop_sync_routes():
 
 @respx.mock
 def test_run_resources_can_stream_or_poll_events():
-    improvement_route = respx.post(
-        "http://test/api/v1/projects/project-1/improvement-runs"
-    ).mock(
+    improvement_route = respx.post("http://test/api/v1/projects/project-1/improvement-runs").mock(
         return_value=httpx.Response(
             202,
             content=b"event: start\n\n",
@@ -175,9 +169,7 @@ def test_run_resources_can_stream_or_poll_events():
     response.close()
     assert improvement_route.calls.last.request.headers["accept"] == "text/event-stream"
     assert improvement_route.calls.last.request.headers["x-cancel-on-disconnect"] == "1"
-    assert client.unfurl_runs.list_events("project-1", "run-1") == {
-        "data": [{"event": "done"}]
-    }
+    assert client.unfurl_runs.list_events("project-1", "run-1") == {"data": [{"event": "done"}]}
     assert unfurl_events_route.called
 
 
@@ -186,9 +178,7 @@ def test_operator_and_team_ticket_routes():
     operator_route = respx.post(
         "http://test/api/v1/projects/project-1/operator/canvases/canvas-1/builder/plan"
     ).mock(return_value=httpx.Response(200, json={"ok": True, "data": {"run": "run-1"}}))
-    team_route = respx.post(
-        "http://test/api/v1/teams/team-1/tickets/ticket-1/execute"
-    ).mock(
+    team_route = respx.post("http://test/api/v1/teams/team-1/tickets/ticket-1/execute").mock(
         return_value=httpx.Response(
             202,
             json={"ok": True, "data": {"runUuid": "run-1"}},
@@ -196,24 +186,71 @@ def test_operator_and_team_ticket_routes():
     )
 
     client = FulcrumClient(base_url="http://test", api_key="token")
-    assert client.operator.plan_canvas_builder("project-1", "canvas-1", {}) == {
-        "run": "run-1"
-    }
+    assert client.operator.plan_canvas_builder("project-1", "canvas-1", {}) == {"run": "run-1"}
     assert client.team_tickets.execute("team-1", "ticket-1") == {"runUuid": "run-1"}
     assert operator_route.called
     assert team_route.calls.last.request.content == b"{}"
 
 
 @respx.mock
-def test_teams_resource_lists_team_projects():
-    route = respx.get("http://test/api/v1/teams/team-1/projects").mock(
+def test_teams_resource_manages_teams_and_links_projects():
+    create_route = respx.post("http://test/api/v1/teams").mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"uuid": "team-1"}},
+        )
+    )
+    update_route = respx.patch("http://test/api/v1/teams/team-1").mock(
+        return_value=httpx.Response(
+            200,
+            json={"ok": True, "data": {"name": "Ops"}},
+        )
+    )
+    members_route = respx.post("http://test/api/v1/teams/team-1/members").mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"clerkUserId": "user-1"}},
+        )
+    )
+    projects_route = respx.get("http://test/api/v1/teams/team-1/projects").mock(
         return_value=httpx.Response(
             200,
             json={"ok": True, "data": [{"uuid": "project-1"}]},
         )
     )
+    add_project_route = respx.post("http://test/api/v1/teams/team-1/projects").mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"projectUuid": "project-1"}},
+        )
+    )
+    remove_project_route = respx.delete("http://test/api/v1/teams/team-1/projects/project-1").mock(
+        return_value=httpx.Response(
+            200,
+            json={"ok": True, "data": {"removed": True}},
+        )
+    )
 
     client = FulcrumClient(base_url="http://test", api_key="token")
 
+    assert client.teams.create(name="Ops", slug="ops") == {"uuid": "team-1"}
+    assert client.teams.update("team-1", name="Ops") == {"name": "Ops"}
+    assert client.teams.add_member("team-1", clerk_user_id="user-1", role="admin") == {
+        "clerkUserId": "user-1"
+    }
     assert client.teams.list_projects("team-1") == {"data": [{"uuid": "project-1"}]}
-    assert route.called
+    assert client.teams.add_project(
+        "team-1",
+        project_uuid="project-1",
+        is_primary=True,
+    ) == {"projectUuid": "project-1"}
+    assert client.teams.remove_project("team-1", "project-1") == {"removed": True}
+
+    assert create_route.calls.last.request.content == b'{"name":"Ops","slug":"ops"}'
+    assert update_route.calls.last.request.content == b'{"name":"Ops"}'
+    assert members_route.calls.last.request.content == (b'{"clerkUserId":"user-1","role":"admin"}')
+    assert projects_route.called
+    assert add_project_route.calls.last.request.content == (
+        b'{"projectUuid":"project-1","isPrimary":true}'
+    )
+    assert remove_project_route.called

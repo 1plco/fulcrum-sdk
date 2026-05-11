@@ -12,8 +12,46 @@ class TeamsResource(BaseResource):
     def list(self) -> JsonDict:
         return self._request("GET", "/api/v1/teams")
 
+    def create(
+        self,
+        *,
+        name: str,
+        slug: str | None = None,
+        description: str | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            "/api/v1/teams",
+            json=self._clean_params(
+                name=name,
+                slug=slug,
+                description=description,
+            ),
+        )
+
     def get(self, team_uuid: str) -> JsonDict:
         return self._request("GET", self._team_path(team_uuid))
+
+    def update(
+        self,
+        team_uuid: str,
+        *,
+        name: str | None = None,
+        slug: str | None = None,
+        description: str | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "PATCH",
+            self._team_path(team_uuid),
+            json=self._clean_params(
+                name=name,
+                slug=slug,
+                description=description,
+            ),
+        )
+
+    def archive(self, team_uuid: str) -> JsonDict:
+        return self._request("DELETE", self._team_path(team_uuid))
 
     def list_members(self, team_uuid: str) -> JsonDict:
         return self._request("GET", self._team_path(team_uuid, "members"))
