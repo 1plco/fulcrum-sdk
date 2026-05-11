@@ -11,6 +11,14 @@ Internal (system-level, not for direct use):
 
 from fulcrum_sdk._version import __version__
 from fulcrum_sdk.client import FulcrumClient
+from fulcrum_sdk.errors import FulcrumAPIError, FulcrumConfigError, FulcrumError
 from fulcrum_sdk.tickets import TicketsResource
 
-__all__ = ["FulcrumClient", "TicketsResource", "__version__"]
+__all__ = [
+    "FulcrumAPIError",
+    "FulcrumClient",
+    "FulcrumConfigError",
+    "FulcrumError",
+    "TicketsResource",
+    "__version__",
+]

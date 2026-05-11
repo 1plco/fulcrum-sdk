@@ -1,22 +1,17 @@
-"""Placeholder for future public models.
+"""Shared public SDK models."""
 
-This module will contain public Pydantic models for the Fulcrum platform
-(Ticket, SOP, Project, Run, etc.).
+from typing import Any
 
-Example future models:
-    from fulcrum_sdk.models import Ticket, SOP, Project
+from pydantic import BaseModel, Field
 
-    ticket = Ticket(
-        id="ticket-123",
-        title="Data extraction request",
-        status="open",
-    )
-"""
 
-# Future implementation:
-# from fulcrum_sdk.models.ticket import Ticket
-# from fulcrum_sdk.models.sop import SOP
-# from fulcrum_sdk.models.project import Project
-# from fulcrum_sdk.models.run import Run
-#
-# __all__ = ["Ticket", "SOP", "Project", "Run"]
+class PaginationMeta(BaseModel):
+    """Pagination metadata returned by v1 list endpoints."""
+
+    has_more: bool = Field(alias="hasMore")
+    next_cursor: str | None = Field(default=None, alias="nextCursor")
+
+
+JsonDict = dict[str, Any]
+
+__all__ = ["JsonDict", "PaginationMeta"]

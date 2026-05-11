@@ -19,12 +19,21 @@ class TicketsResource:
         self,
         *,
         api_key: str | None = None,
-        base_url: str,
+        base_url: str | None = None,
+        client: Any | None = None,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
+        if client is not None:
+            self._client = client
+            self._api_key = None
+            self._base_url = ""
+            self._timeout = timeout
+            return
+
         if not base_url:
             raise FulcrumConfigError("base_url is required")
 
+        self._client = None
         self._api_key = api_key
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
@@ -236,6 +245,12 @@ class TicketsResource:
         json: JsonDict | None = None,
         params: dict[str, str] | None = None,
     ) -> JsonDict:
+        if self._client is not None:
+            result = self._client.request(method, path, json=json, params=params)
+            if isinstance(result, dict):
+                return result
+            raise FulcrumAPIError("Expected JSON response from ticket API")
+
         try:
             with create_http_client(timeout=self._timeout, base_url=self._base_url) as client:
                 response = client.request(
