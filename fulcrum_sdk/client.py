@@ -11,11 +11,22 @@ from typing import Any
 import httpx
 
 from fulcrum_sdk._internal.http import DEFAULT_TIMEOUT, create_http_client
+from fulcrum_sdk.dashboard import DashboardResource
 from fulcrum_sdk.exceptions import FulcrumAPIError, FulcrumConfigError
+from fulcrum_sdk.github import GithubResource
+from fulcrum_sdk.improvements import ImprovementsResource
+from fulcrum_sdk.internal_db import InternalDbResource
+from fulcrum_sdk.logs import LogsResource
 from fulcrum_sdk.models import JsonDict
+from fulcrum_sdk.operator import OperatorResource
+from fulcrum_sdk.project_members import ProjectMembersResource
 from fulcrum_sdk.projects import ProjectsResource
+from fulcrum_sdk.resources import ResourcesResource
+from fulcrum_sdk.sop_sync import SopSyncResource
 from fulcrum_sdk.sops import SopsResource
+from fulcrum_sdk.team_tickets import TeamTicketsResource
 from fulcrum_sdk.tickets import TicketsResource
+from fulcrum_sdk.unfurl_runs import UnfurlRunsResource
 
 DEFAULT_MAX_RETRIES = 2
 DEFAULT_RETRY_DELAY_SECONDS = 0.25
@@ -53,9 +64,20 @@ class FulcrumClient:
         self._max_retries = max(0, max_retries)
         self._retry_delay_seconds = max(0.0, retry_delay_seconds)
         self._timeout = timeout
+        self._dashboard: DashboardResource | None = None
+        self._github: GithubResource | None = None
+        self._improvements: ImprovementsResource | None = None
+        self._internal_db: InternalDbResource | None = None
+        self._logs: LogsResource | None = None
+        self._operator: OperatorResource | None = None
+        self._project_members: ProjectMembersResource | None = None
         self._projects: ProjectsResource | None = None
+        self._resources: ResourcesResource | None = None
+        self._sop_sync: SopSyncResource | None = None
         self._sops: SopsResource | None = None
+        self._team_tickets: TeamTicketsResource | None = None
         self._tickets: TicketsResource | None = None
+        self._unfurl_runs: UnfurlRunsResource | None = None
 
     @classmethod
     def from_env(cls) -> FulcrumClient:
@@ -79,6 +101,72 @@ class FulcrumClient:
         if self._sops is None:
             self._sops = SopsResource(client=self)
         return self._sops
+
+    @property
+    def project_members(self) -> ProjectMembersResource:
+        if self._project_members is None:
+            self._project_members = ProjectMembersResource(client=self)
+        return self._project_members
+
+    @property
+    def sop_sync(self) -> SopSyncResource:
+        if self._sop_sync is None:
+            self._sop_sync = SopSyncResource(client=self)
+        return self._sop_sync
+
+    @property
+    def resources(self) -> ResourcesResource:
+        if self._resources is None:
+            self._resources = ResourcesResource(client=self)
+        return self._resources
+
+    @property
+    def improvements(self) -> ImprovementsResource:
+        if self._improvements is None:
+            self._improvements = ImprovementsResource(client=self)
+        return self._improvements
+
+    @property
+    def unfurl_runs(self) -> UnfurlRunsResource:
+        if self._unfurl_runs is None:
+            self._unfurl_runs = UnfurlRunsResource(client=self)
+        return self._unfurl_runs
+
+    @property
+    def github(self) -> GithubResource:
+        if self._github is None:
+            self._github = GithubResource(client=self)
+        return self._github
+
+    @property
+    def dashboard(self) -> DashboardResource:
+        if self._dashboard is None:
+            self._dashboard = DashboardResource(client=self)
+        return self._dashboard
+
+    @property
+    def logs(self) -> LogsResource:
+        if self._logs is None:
+            self._logs = LogsResource(client=self)
+        return self._logs
+
+    @property
+    def operator(self) -> OperatorResource:
+        if self._operator is None:
+            self._operator = OperatorResource(client=self)
+        return self._operator
+
+    @property
+    def internal_db(self) -> InternalDbResource:
+        if self._internal_db is None:
+            self._internal_db = InternalDbResource(client=self)
+        return self._internal_db
+
+    @property
+    def team_tickets(self) -> TeamTicketsResource:
+        if self._team_tickets is None:
+            self._team_tickets = TeamTicketsResource(client=self)
+        return self._team_tickets
 
     def request(
         self,
