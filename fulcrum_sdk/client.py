@@ -1,38 +1,43 @@
-"""Placeholder for future FulcrumClient.
+"""User-facing Fulcrum client."""
 
-This module will contain the user-facing FulcrumClient for interacting with
-the Fulcrum platform APIs (tickets, SOPs, projects, etc.).
+from __future__ import annotations
 
-Example future usage:
-    from fulcrum_sdk import FulcrumClient
+import os
 
-    client = FulcrumClient(api_key="your-api-key")
+from fulcrum_sdk._internal.http import DEFAULT_TIMEOUT
+from fulcrum_sdk.exceptions import FulcrumConfigError
+from fulcrum_sdk.tickets import TicketsResource
 
-    # Submit tickets
-    ticket = client.tickets.create(
-        title="Data extraction request",
-        description="Extract all invoices from Q4 2024"
-    )
 
-    # Manage SOPs
-    sops = client.sops.list(project_id="proj-123")
-"""
+class FulcrumClient:
+    """Client for Fulcrum public v1 APIs."""
 
-# Future implementation:
-# class FulcrumClient:
-#     """User-facing client for Fulcrum platform APIs."""
-#
-#     def __init__(self, api_key: str, base_url: str | None = None) -> None:
-#         ...
-#
-#     @property
-#     def tickets(self) -> TicketsResource:
-#         ...
-#
-#     @property
-#     def sops(self) -> SOPsResource:
-#         ...
-#
-#     @property
-#     def projects(self) -> ProjectsResource:
-#         ...
+    def __init__(
+        self,
+        *,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        timeout: float = DEFAULT_TIMEOUT,
+    ) -> None:
+        resolved_base_url = base_url or os.environ.get("FULCRUM_BASE_URL")
+        if not resolved_base_url:
+            raise FulcrumConfigError("base_url or FULCRUM_BASE_URL is required")
+
+        self._api_key = (
+            api_key
+            or os.environ.get("FULCRUM_API_KEY")
+            or os.environ.get("FULCRUM_RUN_TOKEN")
+        )
+        self._base_url = resolved_base_url
+        self._timeout = timeout
+        self._tickets: TicketsResource | None = None
+
+    @property
+    def tickets(self) -> TicketsResource:
+        if self._tickets is None:
+            self._tickets = TicketsResource(
+                api_key=self._api_key,
+                base_url=self._base_url,
+                timeout=self._timeout,
+            )
+        return self._tickets
