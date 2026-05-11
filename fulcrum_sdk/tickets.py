@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, overload
 
 import httpx
 
@@ -46,7 +46,11 @@ class TicketsResource:
         limit: int | None = None,
     ) -> JsonDict:
         params = self._pagination_params(cursor=cursor, limit=limit)
-        return self._request("GET", f"/api/v1/projects/{project_uuid}/tickets", params=params)
+        return self._request(
+            "GET",
+            f"/api/v1/projects/{project_uuid}/tickets",
+            params=params,
+        )
 
     def create(self, project_uuid: str, prompt: str) -> JsonDict:
         return self._request(
@@ -109,6 +113,28 @@ class TicketsResource:
             json={"messageUuid": message_uuid},
         )
 
+    def execute_stream(
+        self,
+        project_uuid: str,
+        ticket_uuid: str,
+        message_uuid: str,
+        *,
+        cancel_on_disconnect: bool = False,
+    ) -> httpx.Response:
+        headers = {"Accept": "text/event-stream"}
+        if cancel_on_disconnect:
+            headers["X-Cancel-On-Disconnect"] = "1"
+        result = self._request(
+            "POST",
+            f"/api/v1/projects/{project_uuid}/tickets/{ticket_uuid}/execute",
+            json={"messageUuid": message_uuid},
+            headers=headers,
+            stream=True,
+        )
+        if isinstance(result, httpx.Response):
+            return result
+        raise FulcrumAPIError("Expected streaming response from ticket execute API")
+
     def interrupt(self, project_uuid: str, ticket_uuid: str) -> JsonDict:
         return self._request(
             "POST",
@@ -150,6 +176,23 @@ class TicketsResource:
             "GET",
             f"/api/v1/projects/{project_uuid}/tickets/{ticket_uuid}/runs/{run_uuid}/events",
             params=params,
+        )
+
+    def poll_run_events(
+        self,
+        project_uuid: str,
+        ticket_uuid: str,
+        run_uuid: str,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+    ) -> JsonDict:
+        return self.list_run_events(
+            project_uuid,
+            ticket_uuid,
+            run_uuid,
+            cursor=cursor,
+            limit=limit,
         )
 
     def list_dispatches(
@@ -231,11 +274,39 @@ class TicketsResource:
             params["limit"] = str(limit)
         return params
 
-    def _headers(self) -> dict[str, str]:
+    def _headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
+        if extra:
+            headers.update(extra)
         return headers
+
+    @overload
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        json: JsonDict | None = None,
+        params: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+        stream: Literal[False] = False,
+    ) -> JsonDict:
+        ...
+
+    @overload
+    def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        json: JsonDict | None = None,
+        params: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+        stream: Literal[True],
+    ) -> httpx.Response:
+        ...
 
     def _request(
         self,
@@ -244,19 +315,39 @@ class TicketsResource:
         *,
         json: JsonDict | None = None,
         params: dict[str, str] | None = None,
-    ) -> JsonDict:
+        headers: dict[str, str] | None = None,
+        stream: bool = False,
+    ) -> JsonDict | httpx.Response:
         if self._client is not None:
-            result = self._client.request(method, path, json=json, params=params)
+            result = self._client.request(
+                method,
+                path,
+                json=json,
+                params=params,
+                headers=headers,
+                stream=stream,
+            )
             if isinstance(result, dict):
                 return result
+            if isinstance(result, httpx.Response):
+                return result
             raise FulcrumAPIError("Expected JSON response from ticket API")
+
+        if stream:
+            return self._stream_request(
+                method,
+                path,
+                json=json,
+                params=params,
+                headers=headers,
+            )
 
         try:
             with create_http_client(timeout=self._timeout, base_url=self._base_url) as client:
                 response = client.request(
                     method,
                     path,
-                    headers=self._headers(),
+                    headers=self._headers(headers),
                     json=json,
                     params=params,
                 )
@@ -264,6 +355,30 @@ class TicketsResource:
             raise FulcrumAPIError(str(exc)) from exc
 
         return self._unwrap_response(response)
+
+    def _stream_request(
+        self,
+        method: str,
+        path: str,
+        *,
+        json: JsonDict | None = None,
+        params: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> httpx.Response:
+        client = create_http_client(timeout=self._timeout, base_url=self._base_url)
+        request = client.build_request(
+            method,
+            path,
+            headers=self._headers(headers),
+            json=json,
+            params=params,
+        )
+        response = client.send(request, stream=True)
+        if response.status_code < 200 or response.status_code >= 300:
+            body = response.read().decode(errors="replace")
+            client.close()
+            raise self._api_error(response.status_code, body)
+        return response
 
     def _unwrap_response(self, response: httpx.Response) -> JsonDict:
         try:
@@ -279,7 +394,11 @@ class TicketsResource:
                     message = error["message"]
                 elif isinstance(body.get("message"), str):
                     message = body["message"]
-            raise FulcrumAPIError(message, response.status_code)
+            raise FulcrumAPIError(
+                message,
+                response.status_code,
+                response.text[:500],
+            )
 
         if isinstance(body, dict) and body.get("ok") is True:
             data = body.get("data")
@@ -294,3 +413,19 @@ class TicketsResource:
             return body
 
         return {"data": body}
+
+    def _api_error(self, status_code: int, body_text: str) -> FulcrumAPIError:
+        message = body_text or f"Fulcrum API returned {status_code}"
+        try:
+            body = httpx.Response(status_code, content=body_text).json()
+        except ValueError:
+            body = None
+
+        if isinstance(body, dict):
+            error = body.get("error")
+            if isinstance(error, dict) and isinstance(error.get("message"), str):
+                message = error["message"]
+            elif isinstance(body.get("message"), str):
+                message = body["message"]
+
+        return FulcrumAPIError(message, status_code, body_text[:500])

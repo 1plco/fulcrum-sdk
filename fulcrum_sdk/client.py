@@ -13,6 +13,8 @@ import httpx
 from fulcrum_sdk._internal.http import DEFAULT_TIMEOUT, create_http_client
 from fulcrum_sdk.exceptions import FulcrumAPIError, FulcrumConfigError
 from fulcrum_sdk.models import JsonDict
+from fulcrum_sdk.projects import ProjectsResource
+from fulcrum_sdk.sops import SopsResource
 from fulcrum_sdk.tickets import TicketsResource
 
 DEFAULT_MAX_RETRIES = 2
@@ -51,6 +53,8 @@ class FulcrumClient:
         self._max_retries = max(0, max_retries)
         self._retry_delay_seconds = max(0.0, retry_delay_seconds)
         self._timeout = timeout
+        self._projects: ProjectsResource | None = None
+        self._sops: SopsResource | None = None
         self._tickets: TicketsResource | None = None
 
     @classmethod
@@ -64,6 +68,18 @@ class FulcrumClient:
             self._tickets = TicketsResource(client=self)
         return self._tickets
 
+    @property
+    def projects(self) -> ProjectsResource:
+        if self._projects is None:
+            self._projects = ProjectsResource(client=self)
+        return self._projects
+
+    @property
+    def sops(self) -> SopsResource:
+        if self._sops is None:
+            self._sops = SopsResource(client=self)
+        return self._sops
+
     def request(
         self,
         method: str,
@@ -71,6 +87,7 @@ class FulcrumClient:
         *,
         json: JsonDict | None = None,
         params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
         stream: bool = False,
     ) -> JsonDict | httpx.Response:
         """Call a Fulcrum v1 API path.
@@ -80,13 +97,20 @@ class FulcrumClient:
             path: Absolute API path such as /api/v1/projects.
             json: Optional JSON request body.
             params: Optional query parameters.
+            headers: Optional per-request headers.
             stream: When true, return the raw response for caller-managed streaming.
 
         Returns:
             Unwrapped response data for JSON routes, or a raw response for streams.
         """
         if stream:
-            return self._stream_request(method, path, json=json, params=params)
+            return self._stream_request(
+                method,
+                path,
+                json=json,
+                params=params,
+                headers=headers,
+            )
 
         last_error: Exception | None = None
         for attempt in range(self._max_retries + 1):
@@ -95,7 +119,7 @@ class FulcrumClient:
                     response = client.request(
                         method,
                         path,
-                        headers=self._headers(),
+                        headers=self._headers(headers),
                         json=json,
                         params=params,
                     )
@@ -116,10 +140,12 @@ class FulcrumClient:
         with create_http_client(timeout=self._timeout, base_url=self._base_url) as client:
             yield client
 
-    def _headers(self) -> dict[str, str]:
+    def _headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
+        if extra:
+            headers.update(extra)
         return headers
 
     def _stream_request(
@@ -129,12 +155,13 @@ class FulcrumClient:
         *,
         json: JsonDict | None = None,
         params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> httpx.Response:
         client = create_http_client(timeout=self._timeout, base_url=self._base_url)
         response = client.build_request(
             method,
             path,
-            headers=self._headers(),
+            headers=self._headers(headers),
             json=json,
             params=params,
         )
