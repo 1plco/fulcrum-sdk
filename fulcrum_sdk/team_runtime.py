@@ -136,3 +136,22 @@ class TeamRuntimeResource(BaseResource):
             "GET",
             self._team_path(team_uuid, "runtime", "artifacts", artifact_uuid),
         )
+
+    def create_context_package(
+        self,
+        team_uuid: str,
+        node_uuid: str,
+        *,
+        source_artifact_uuids: list[str] | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._team_path(
+                team_uuid,
+                "runtime",
+                "nodes",
+                node_uuid,
+                "context-package",
+            ),
+            json=self._clean_params(sourceArtifactUuids=source_artifact_uuids),
+        )

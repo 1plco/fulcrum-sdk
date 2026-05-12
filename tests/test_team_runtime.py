@@ -180,6 +180,27 @@ def test_team_runtime_creates_and_reads_artifacts():
 
 
 @respx.mock
+def test_team_runtime_creates_context_packages():
+    route = respx.post(
+        "http://test/api/v1/teams/team-1/runtime/nodes/node-1/context-package"
+    ).mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"package": {"uuid": "package-1"}}},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="runtime-token")
+
+    assert client.team_runtime.create_context_package(
+        "team-1",
+        "node-1",
+        source_artifact_uuids=["artifact-1"],
+    ) == {"package": {"uuid": "package-1"}}
+    assert route.calls.last.request.content == b'{"sourceArtifactUuids":["artifact-1"]}'
+
+
+@respx.mock
 def test_sops_resource_reads_readiness():
     route = respx.get("http://test/api/v1/projects/project-1/sops/sop-1/readiness").mock(
         return_value=httpx.Response(

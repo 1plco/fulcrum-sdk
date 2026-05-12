@@ -111,6 +111,20 @@ def get_team_artifact(team_uuid: str, artifact_uuid: str) -> dict[str, Any]:
     return client.team_runtime.get_artifact(team_uuid, artifact_uuid)
 
 
+def create_team_context_package(
+    team_uuid: str,
+    node_uuid: str,
+    *,
+    source_artifact_uuids: list[str] | None = None,
+) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.team_runtime.create_context_package(
+        team_uuid,
+        node_uuid,
+        source_artifact_uuids=source_artifact_uuids,
+    )
+
+
 def create_and_execute_project_ticket(project_uuid: str, prompt: str) -> dict[str, Any]:
     client = FulcrumClient.from_env()
     created = client.tickets.create(project_uuid, prompt)

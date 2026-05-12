@@ -80,6 +80,11 @@ artifact_detail = client.team_runtime.get_artifact(
     "team-uuid",
     artifact["artifact"]["uuid"],
 )
+context_package = client.team_runtime.create_context_package(
+    "team-uuid",
+    "node-uuid",
+    source_artifact_uuids=[artifact["artifact"]["uuid"]],
+)
 
 # Create and execute a project ticket.
 created = client.tickets.create("project-uuid", "Run the billing SOP")
