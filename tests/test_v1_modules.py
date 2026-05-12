@@ -14,6 +14,7 @@ from fulcrum_sdk import (
     ProjectMembersResource,
     ResourcesResource,
     SopSyncResource,
+    TeamRuntimeResource,
     TeamsResource,
     TeamTicketsResource,
     UnfurlRunsResource,
@@ -34,6 +35,7 @@ def test_client_exposes_remaining_v1_resources():
     assert isinstance(client.operator, OperatorResource)
     assert isinstance(client.internal_db, InternalDbResource)
     assert isinstance(client.teams, TeamsResource)
+    assert isinstance(client.team_runtime, TeamRuntimeResource)
     assert isinstance(client.team_tickets, TeamTicketsResource)
 
 
@@ -51,6 +53,7 @@ def test_expected_route_groups_have_sdk_properties():
         "resources": client.resources,
         "sop-sync": client.sop_sync,
         "teams": client.teams,
+        "team-runtime": client.team_runtime,
         "team-tickets": client.team_tickets,
         "unfurl-runs": client.unfurl_runs,
     }
@@ -67,6 +70,7 @@ def test_expected_route_groups_have_sdk_properties():
         "resources",
         "sop-sync",
         "teams",
+        "team-runtime",
         "team-tickets",
         "unfurl-runs",
     }

@@ -24,6 +24,7 @@ from fulcrum_sdk.projects import ProjectsResource
 from fulcrum_sdk.resources import ResourcesResource
 from fulcrum_sdk.sop_sync import SopSyncResource
 from fulcrum_sdk.sops import SopsResource
+from fulcrum_sdk.team_runtime import TeamRuntimeResource
 from fulcrum_sdk.team_tickets import TeamTicketsResource
 from fulcrum_sdk.teams import TeamsResource
 from fulcrum_sdk.tickets import TicketsResource
@@ -76,6 +77,7 @@ class FulcrumClient:
         self._resources: ResourcesResource | None = None
         self._sop_sync: SopSyncResource | None = None
         self._sops: SopsResource | None = None
+        self._team_runtime: TeamRuntimeResource | None = None
         self._team_tickets: TeamTicketsResource | None = None
         self._teams: TeamsResource | None = None
         self._tickets: TicketsResource | None = None
@@ -169,6 +171,12 @@ class FulcrumClient:
         if self._team_tickets is None:
             self._team_tickets = TeamTicketsResource(client=self)
         return self._team_tickets
+
+    @property
+    def team_runtime(self) -> TeamRuntimeResource:
+        if self._team_runtime is None:
+            self._team_runtime = TeamRuntimeResource(client=self)
+        return self._team_runtime
 
     @property
     def teams(self) -> TeamsResource:

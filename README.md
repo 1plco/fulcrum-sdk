@@ -43,6 +43,18 @@ projects = client.teams.list_projects("team-uuid")
 # Load SOP metadata for a project.
 sops = client.sops.list("project-uuid")
 
+# Check whether a SOP is ready to execute.
+readiness = client.sops.readiness("project-uuid", "sop-uuid")
+
+# Load team runtime context and submit a graph draft for approval.
+context = client.team_runtime.context("team-uuid")
+graph = client.team_runtime.submit_graph("team-uuid", {"summary": "Plan", "nodes": []})
+approval = client.team_runtime.request_approval(
+    "team-uuid",
+    graph_uuid=graph["graph"]["uuid"],
+    prompt="Please approve this execution graph.",
+)
+
 # Create and execute a project ticket.
 created = client.tickets.create("project-uuid", "Run the billing SOP")
 ticket = created["ticket"]
@@ -54,7 +66,7 @@ The public client exposes typed resource groups for current v1 routes:
 
 - `client.projects`, `client.project_members`, `client.teams`
 - `client.sops`, `client.sop_sync`
-- `client.tickets`, `client.team_tickets`
+- `client.tickets`, `client.team_tickets`, `client.team_runtime`
 - `client.internal_db`, `client.resources`
 - `client.improvements`, `client.unfurl_runs`
 - `client.github`, `client.dashboard`, `client.logs`, `client.operator`

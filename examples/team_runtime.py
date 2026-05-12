@@ -15,9 +15,35 @@ def list_team_projects(team_uuid: str) -> dict[str, Any]:
     return client.teams.list_projects(team_uuid)
 
 
+def load_team_runtime_context(team_uuid: str) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.team_runtime.context(team_uuid)
+
+
 def list_project_sops(project_uuid: str) -> dict[str, Any]:
     client = FulcrumClient.from_env()
     return client.sops.list(project_uuid)
+
+
+def check_project_sop_readiness(project_uuid: str, sop_uuid: str) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.sops.readiness(project_uuid, sop_uuid)
+
+
+def submit_team_graph_for_approval(
+    team_uuid: str,
+    draft: dict[str, Any],
+    *,
+    prompt: str | None = None,
+) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    graph_result = client.team_runtime.submit_graph(team_uuid, draft)
+    graph_uuid = graph_result["graph"]["uuid"]
+    return client.team_runtime.request_approval(
+        team_uuid,
+        graph_uuid=graph_uuid,
+        prompt=prompt,
+    )
 
 
 def create_and_execute_project_ticket(project_uuid: str, prompt: str) -> dict[str, Any]:

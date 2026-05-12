@@ -106,6 +106,12 @@ class SopsResource:
             f"/api/v1/projects/{project_uuid}/sops/{sop_uuid}/signed-url",
         )
 
+    def readiness(self, project_uuid: str, sop_uuid: str) -> JsonDict:
+        return self._request(
+            "GET",
+            f"/api/v1/projects/{project_uuid}/sops/{sop_uuid}/readiness",
+        )
+
     def parse(
         self,
         project_uuid: str,
