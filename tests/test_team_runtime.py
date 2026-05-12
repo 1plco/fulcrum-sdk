@@ -136,6 +136,50 @@ def test_team_runtime_creates_checkpoints():
 
 
 @respx.mock
+def test_team_runtime_creates_and_reads_artifacts():
+    create_route = respx.post("http://test/api/v1/teams/team-1/runtime/artifacts").mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"artifact": {"uuid": "artifact-1"}}},
+        )
+    )
+    get_route = respx.get(
+        "http://test/api/v1/teams/team-1/runtime/artifacts/artifact-1"
+    ).mock(
+        return_value=httpx.Response(
+            200,
+            json={"ok": True, "data": {"artifact": {"uuid": "artifact-1"}}},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="runtime-token")
+
+    assert client.team_runtime.create_artifact(
+        "team-1",
+        content={"answer": "ready"},
+        graph_uuid="graph-1",
+        kind="node_output",
+        summary="Ready.",
+        artifact_refs=[{"kind": "ticket", "uuid": "ticket-1"}],
+        data_classes=["internal"],
+        schema_id="answer.v1",
+    ) == {"artifact": {"uuid": "artifact-1"}}
+    assert client.team_runtime.get_artifact("team-1", "artifact-1") == {
+        "artifact": {"uuid": "artifact-1"}
+    }
+    assert create_route.calls.last.request.content == (
+        b'{"artifactRefs":[{"kind":"ticket","uuid":"ticket-1"}],'
+        b'"content":{"answer":"ready"},'
+        b'"dataClasses":["internal"],'
+        b'"graphUuid":"graph-1",'
+        b'"kind":"node_output",'
+        b'"schemaId":"answer.v1",'
+        b'"summary":"Ready."}'
+    )
+    assert get_route.called
+
+
+@respx.mock
 def test_sops_resource_reads_readiness():
     route = respx.get("http://test/api/v1/projects/project-1/sops/sop-1/readiness").mock(
         return_value=httpx.Response(

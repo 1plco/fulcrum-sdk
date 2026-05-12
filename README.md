@@ -69,6 +69,17 @@ checkpoint = client.team_runtime.create_checkpoint(
     reason="approval_wait",
     summary="Waiting for graph approval.",
 )
+artifact = client.team_runtime.create_artifact(
+    "team-uuid",
+    content={"answer": "ready"},
+    graph_uuid=graph["graph"]["uuid"],
+    kind="node_output",
+    summary="SOP result is ready.",
+)
+artifact_detail = client.team_runtime.get_artifact(
+    "team-uuid",
+    artifact["artifact"]["uuid"],
+)
 
 # Create and execute a project ticket.
 created = client.tickets.create("project-uuid", "Run the billing SOP")

@@ -86,6 +86,31 @@ def create_team_checkpoint(
     )
 
 
+def create_team_artifact(
+    team_uuid: str,
+    *,
+    content: dict[str, Any],
+    graph_uuid: str,
+    kind: str,
+    summary: str,
+    graph_node_uuid: str | None = None,
+) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.team_runtime.create_artifact(
+        team_uuid,
+        content=content,
+        graph_node_uuid=graph_node_uuid,
+        graph_uuid=graph_uuid,
+        kind=kind,
+        summary=summary,
+    )
+
+
+def get_team_artifact(team_uuid: str, artifact_uuid: str) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.team_runtime.get_artifact(team_uuid, artifact_uuid)
+
+
 def create_and_execute_project_ticket(project_uuid: str, prompt: str) -> dict[str, Any]:
     client = FulcrumClient.from_env()
     created = client.tickets.create(project_uuid, prompt)
