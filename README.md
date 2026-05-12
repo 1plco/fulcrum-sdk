@@ -85,6 +85,12 @@ context_package = client.team_runtime.create_context_package(
     "node-uuid",
     source_artifact_uuids=[artifact["artifact"]["uuid"]],
 )
+claims = client.team_runtime.claim_ready_nodes(
+    "team-uuid",
+    graph["graph"]["uuid"],
+    idempotency_key="claim-node-wave-1",
+    limit=1,
+)
 
 # Create and execute a project ticket.
 created = client.tickets.create("project-uuid", "Run the billing SOP")

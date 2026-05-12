@@ -76,9 +76,7 @@ def test_team_runtime_graph_and_approval_routes():
 
 @respx.mock
 def test_team_runtime_appends_graph_events():
-    route = respx.post(
-        "http://test/api/v1/teams/team-1/runtime/graphs/graph-1/events"
-    ).mock(
+    route = respx.post("http://test/api/v1/teams/team-1/runtime/graphs/graph-1/events").mock(
         return_value=httpx.Response(
             201,
             json={"ok": True, "data": {"event": {"uuid": "event-1"}}},
@@ -143,9 +141,7 @@ def test_team_runtime_creates_and_reads_artifacts():
             json={"ok": True, "data": {"artifact": {"uuid": "artifact-1"}}},
         )
     )
-    get_route = respx.get(
-        "http://test/api/v1/teams/team-1/runtime/artifacts/artifact-1"
-    ).mock(
+    get_route = respx.get("http://test/api/v1/teams/team-1/runtime/artifacts/artifact-1").mock(
         return_value=httpx.Response(
             200,
             json={"ok": True, "data": {"artifact": {"uuid": "artifact-1"}}},
@@ -181,9 +177,7 @@ def test_team_runtime_creates_and_reads_artifacts():
 
 @respx.mock
 def test_team_runtime_creates_context_packages():
-    route = respx.post(
-        "http://test/api/v1/teams/team-1/runtime/nodes/node-1/context-package"
-    ).mock(
+    route = respx.post("http://test/api/v1/teams/team-1/runtime/nodes/node-1/context-package").mock(
         return_value=httpx.Response(
             201,
             json={"ok": True, "data": {"package": {"uuid": "package-1"}}},
@@ -198,6 +192,33 @@ def test_team_runtime_creates_context_packages():
         source_artifact_uuids=["artifact-1"],
     ) == {"package": {"uuid": "package-1"}}
     assert route.calls.last.request.content == b'{"sourceArtifactUuids":["artifact-1"]}'
+
+
+@respx.mock
+def test_team_runtime_claims_ready_nodes():
+    route = respx.post(
+        "http://test/api/v1/teams/team-1/runtime/graphs/graph-1/nodes/claim-ready"
+    ).mock(
+        return_value=httpx.Response(
+            200,
+            json={"ok": True, "data": {"claims": [{"node": {"uuid": "node-1"}}]}},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="runtime-token")
+
+    assert client.team_runtime.claim_ready_nodes(
+        "team-1",
+        "graph-1",
+        idempotency_key="claim-1",
+        limit=2,
+        source_artifact_uuids_by_node_uuid={"node-1": ["artifact-1"]},
+    ) == {"claims": [{"node": {"uuid": "node-1"}}]}
+    assert route.calls.last.request.content == (
+        b'{"idempotencyKey":"claim-1",'
+        b'"limit":2,'
+        b'"sourceArtifactUuidsByNodeUuid":{"node-1":["artifact-1"]}}'
+    )
 
 
 @respx.mock

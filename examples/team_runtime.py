@@ -125,6 +125,24 @@ def create_team_context_package(
     )
 
 
+def claim_team_ready_nodes(
+    team_uuid: str,
+    graph_uuid: str,
+    *,
+    idempotency_key: str,
+    limit: int = 1,
+    source_artifact_uuids_by_node_uuid: dict[str, list[str]] | None = None,
+) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.team_runtime.claim_ready_nodes(
+        team_uuid,
+        graph_uuid,
+        idempotency_key=idempotency_key,
+        limit=limit,
+        source_artifact_uuids_by_node_uuid=source_artifact_uuids_by_node_uuid,
+    )
+
+
 def create_and_execute_project_ticket(project_uuid: str, prompt: str) -> dict[str, Any]:
     client = FulcrumClient.from_env()
     created = client.tickets.create(project_uuid, prompt)

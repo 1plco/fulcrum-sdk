@@ -155,3 +155,29 @@ class TeamRuntimeResource(BaseResource):
             ),
             json=self._clean_params(sourceArtifactUuids=source_artifact_uuids),
         )
+
+    def claim_ready_nodes(
+        self,
+        team_uuid: str,
+        graph_uuid: str,
+        *,
+        idempotency_key: str | None = None,
+        limit: int | None = None,
+        source_artifact_uuids_by_node_uuid: dict[str, list[str]] | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._team_path(
+                team_uuid,
+                "runtime",
+                "graphs",
+                graph_uuid,
+                "nodes",
+                "claim-ready",
+            ),
+            json=self._clean_params(
+                idempotencyKey=idempotency_key,
+                limit=limit,
+                sourceArtifactUuidsByNodeUuid=source_artifact_uuids_by_node_uuid,
+            ),
+        )
