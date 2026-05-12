@@ -252,9 +252,13 @@ def test_team_runtime_creates_context_packages():
     assert client.team_runtime.create_context_package(
         "team-1",
         "node-1",
+        idempotency_key="context-package-1",
         source_artifact_uuids=["artifact-1"],
     ) == {"package": {"uuid": "package-1"}}
-    assert route.calls.last.request.content == b'{"sourceArtifactUuids":["artifact-1"]}'
+    assert route.calls.last.request.content == (
+        b'{"idempotencyKey":"context-package-1","sourceArtifactUuids":["artifact-1"]}'
+    )
+    assert route.calls.last.request.headers["Idempotency-Key"] == "context-package-1"
 
 
 @respx.mock

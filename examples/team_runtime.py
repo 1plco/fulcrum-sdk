@@ -132,12 +132,14 @@ def create_team_context_package(
     team_uuid: str,
     node_uuid: str,
     *,
+    idempotency_key: str | None = None,
     source_artifact_uuids: list[str] | None = None,
 ) -> dict[str, Any]:
     client = FulcrumClient.from_env()
     return client.team_runtime.create_context_package(
         team_uuid,
         node_uuid,
+        idempotency_key=idempotency_key,
         source_artifact_uuids=source_artifact_uuids,
     )
 

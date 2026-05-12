@@ -181,6 +181,7 @@ class TeamRuntimeResource(BaseResource):
         team_uuid: str,
         node_uuid: str,
         *,
+        idempotency_key: str | None = None,
         source_artifact_uuids: list[str] | None = None,
     ) -> JsonDict:
         return self._request(
@@ -192,7 +193,11 @@ class TeamRuntimeResource(BaseResource):
                 node_uuid,
                 "context-package",
             ),
-            json=self._clean_params(sourceArtifactUuids=source_artifact_uuids),
+            headers=self._idempotency_headers(idempotency_key),
+            json=self._clean_params(
+                idempotencyKey=idempotency_key,
+                sourceArtifactUuids=source_artifact_uuids,
+            ),
         )
 
     def claim_ready_nodes(

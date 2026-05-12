@@ -96,6 +96,7 @@ artifact_detail = client.team_runtime.get_artifact(
 context_package = client.team_runtime.create_context_package(
     "team-uuid",
     "node-uuid",
+    idempotency_key="context-package-node-uuid-1",
     source_artifact_uuids=[artifact["artifact"]["uuid"]],
 )
 claims = client.team_runtime.claim_ready_nodes(
