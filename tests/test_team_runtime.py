@@ -143,6 +143,7 @@ def test_team_runtime_appends_graph_events():
         event_id="planner.step.started",
         event_ts="2026-05-11T00:01:00.000Z",
         event_type="team.graph.planner.step",
+        idempotency_key="planner-step-started-1",
         payload={"step": "read-context"},
         status="started",
     ) == {"event": {"uuid": "event-1"}}
@@ -150,9 +151,11 @@ def test_team_runtime_appends_graph_events():
         b'{"eventId":"planner.step.started",'
         b'"eventTs":"2026-05-11T00:01:00.000Z",'
         b'"eventType":"team.graph.planner.step",'
+        b'"idempotencyKey":"planner-step-started-1",'
         b'"payload":{"step":"read-context"},'
         b'"status":"started"}'
     )
+    assert route.calls.last.request.headers["Idempotency-Key"] == "planner-step-started-1"
 
 
 @respx.mock

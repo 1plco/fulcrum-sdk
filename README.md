@@ -67,6 +67,7 @@ client.team_runtime.append_graph_event(
     graph["graph"]["uuid"],
     event_id="planner.step.started",
     event_type="team.graph.planner.step",
+    idempotency_key="planner-step-started-1",
     status="started",
     payload={"step": "read-context"},
 )

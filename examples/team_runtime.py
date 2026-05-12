@@ -60,9 +60,10 @@ def append_team_graph_event(
     team_uuid: str,
     graph_uuid: str,
     *,
-    event_id: str,
     event_type: str,
     status: str,
+    event_id: str | None = None,
+    idempotency_key: str | None = None,
     payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     client = FulcrumClient.from_env()
@@ -71,6 +72,7 @@ def append_team_graph_event(
         graph_uuid,
         event_id=event_id,
         event_type=event_type,
+        idempotency_key=idempotency_key,
         payload=payload,
         status=status,
     )
