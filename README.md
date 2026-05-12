@@ -105,6 +105,12 @@ attempt = client.team_runtime.create_node_attempt(
     graph_uuid=graph["graph"]["uuid"],
     idempotency_key="retry-node-uuid-1",
 )
+project_node = client.team_runtime.execute_project_ticket_node(
+    "team-uuid",
+    "project-node-uuid",
+    graph_uuid=graph["graph"]["uuid"],
+    idempotency_key="project-node-uuid-1",
+)
 node_update = client.team_runtime.update_node(
     "team-uuid",
     "node-uuid",

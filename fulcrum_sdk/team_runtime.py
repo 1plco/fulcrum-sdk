@@ -250,3 +250,28 @@ class TeamRuntimeResource(BaseResource):
                 sourceArtifactUuids=source_artifact_uuids,
             ),
         )
+
+    def execute_project_ticket_node(
+        self,
+        team_uuid: str,
+        node_uuid: str,
+        *,
+        graph_uuid: str,
+        idempotency_key: str | None = None,
+        source_artifact_uuids: list[str] | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._team_path(
+                team_uuid,
+                "runtime",
+                "nodes",
+                node_uuid,
+                "project-ticket",
+            ),
+            json=self._clean_params(
+                graphUuid=graph_uuid,
+                idempotencyKey=idempotency_key,
+                sourceArtifactUuids=source_artifact_uuids,
+            ),
+        )

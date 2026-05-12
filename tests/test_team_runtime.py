@@ -323,6 +323,40 @@ def test_team_runtime_creates_node_attempts():
 
 
 @respx.mock
+def test_team_runtime_executes_project_ticket_nodes():
+    route = respx.post("http://test/api/v1/teams/team-1/runtime/nodes/node-1/project-ticket").mock(
+        return_value=httpx.Response(
+            201,
+            json={
+                "ok": True,
+                "data": {
+                    "projectTicketRunUuid": "project-run-1",
+                    "projectTicketUuid": "project-ticket-1",
+                },
+            },
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="runtime-token")
+
+    assert client.team_runtime.execute_project_ticket_node(
+        "team-1",
+        "node-1",
+        graph_uuid="graph-1",
+        idempotency_key="project-node-1",
+        source_artifact_uuids=["artifact-1"],
+    ) == {
+        "projectTicketRunUuid": "project-run-1",
+        "projectTicketUuid": "project-ticket-1",
+    }
+    assert route.calls.last.request.content == (
+        b'{"graphUuid":"graph-1",'
+        b'"idempotencyKey":"project-node-1",'
+        b'"sourceArtifactUuids":["artifact-1"]}'
+    )
+
+
+@respx.mock
 def test_sops_resource_reads_readiness():
     route = respx.get("http://test/api/v1/projects/project-1/sops/sop-1/readiness").mock(
         return_value=httpx.Response(
