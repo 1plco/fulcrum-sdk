@@ -66,6 +66,26 @@ def append_team_graph_event(
     )
 
 
+def create_team_checkpoint(
+    team_uuid: str,
+    checkpoint: dict[str, Any],
+    *,
+    reason: str,
+    summary: str,
+    graph_uuid: str | None = None,
+    sandbox_id: str | None = None,
+) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.team_runtime.create_checkpoint(
+        team_uuid,
+        checkpoint,
+        graph_uuid=graph_uuid,
+        reason=reason,
+        sandbox_id=sandbox_id,
+        summary=summary,
+    )
+
+
 def create_and_execute_project_ticket(project_uuid: str, prompt: str) -> dict[str, Any]:
     client = FulcrumClient.from_env()
     created = client.tickets.create(project_uuid, prompt)

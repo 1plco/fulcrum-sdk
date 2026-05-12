@@ -60,3 +60,27 @@ class TeamRuntimeResource(BaseResource):
                 status=status,
             ),
         )
+
+    def create_checkpoint(
+        self,
+        team_uuid: str,
+        checkpoint: JsonDict,
+        *,
+        reason: str,
+        summary: str,
+        graph_uuid: str | None = None,
+        runtime_execution_uuid: str | None = None,
+        sandbox_id: str | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._team_path(team_uuid, "runtime", "checkpoints"),
+            json=self._clean_params(
+                checkpoint=checkpoint,
+                graphUuid=graph_uuid,
+                reason=reason,
+                runtimeExecutionUuid=runtime_execution_uuid,
+                sandboxId=sandbox_id,
+                summary=summary,
+            ),
+        )

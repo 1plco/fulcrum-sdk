@@ -106,6 +106,36 @@ def test_team_runtime_appends_graph_events():
 
 
 @respx.mock
+def test_team_runtime_creates_checkpoints():
+    route = respx.post("http://test/api/v1/teams/team-1/runtime/checkpoints").mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"checkpoint": {"uuid": "checkpoint-1"}}},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="runtime-token")
+
+    assert client.team_runtime.create_checkpoint(
+        "team-1",
+        {"step": "approval-wait"},
+        graph_uuid="graph-1",
+        reason="approval_wait",
+        runtime_execution_uuid="runtime-1",
+        sandbox_id="sandbox-1",
+        summary="Waiting for approval.",
+    ) == {"checkpoint": {"uuid": "checkpoint-1"}}
+    assert route.calls.last.request.content == (
+        b'{"checkpoint":{"step":"approval-wait"},'
+        b'"graphUuid":"graph-1",'
+        b'"reason":"approval_wait",'
+        b'"runtimeExecutionUuid":"runtime-1",'
+        b'"sandboxId":"sandbox-1",'
+        b'"summary":"Waiting for approval."}'
+    )
+
+
+@respx.mock
 def test_sops_resource_reads_readiness():
     route = respx.get("http://test/api/v1/projects/project-1/sops/sop-1/readiness").mock(
         return_value=httpx.Response(

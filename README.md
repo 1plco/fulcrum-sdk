@@ -62,6 +62,13 @@ client.team_runtime.append_graph_event(
     status="started",
     payload={"step": "read-context"},
 )
+checkpoint = client.team_runtime.create_checkpoint(
+    "team-uuid",
+    {"step": "approval-wait"},
+    graph_uuid=graph["graph"]["uuid"],
+    reason="approval_wait",
+    summary="Waiting for graph approval.",
+)
 
 # Create and execute a project ticket.
 created = client.tickets.create("project-uuid", "Run the billing SOP")
