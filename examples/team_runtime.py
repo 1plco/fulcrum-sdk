@@ -46,6 +46,26 @@ def submit_team_graph_for_approval(
     )
 
 
+def append_team_graph_event(
+    team_uuid: str,
+    graph_uuid: str,
+    *,
+    event_id: str,
+    event_type: str,
+    status: str,
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.team_runtime.append_graph_event(
+        team_uuid,
+        graph_uuid,
+        event_id=event_id,
+        event_type=event_type,
+        payload=payload,
+        status=status,
+    )
+
+
 def create_and_execute_project_ticket(project_uuid: str, prompt: str) -> dict[str, Any]:
     client = FulcrumClient.from_env()
     created = client.tickets.create(project_uuid, prompt)

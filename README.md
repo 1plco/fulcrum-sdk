@@ -54,6 +54,14 @@ approval = client.team_runtime.request_approval(
     graph_uuid=graph["graph"]["uuid"],
     prompt="Please approve this execution graph.",
 )
+client.team_runtime.append_graph_event(
+    "team-uuid",
+    graph["graph"]["uuid"],
+    event_id="planner.step.started",
+    event_type="team.graph.planner.step",
+    status="started",
+    payload={"step": "read-context"},
+)
 
 # Create and execute a project ticket.
 created = client.tickets.create("project-uuid", "Run the billing SOP")

@@ -75,6 +75,37 @@ def test_team_runtime_graph_and_approval_routes():
 
 
 @respx.mock
+def test_team_runtime_appends_graph_events():
+    route = respx.post(
+        "http://test/api/v1/teams/team-1/runtime/graphs/graph-1/events"
+    ).mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"event": {"uuid": "event-1"}}},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="runtime-token")
+
+    assert client.team_runtime.append_graph_event(
+        "team-1",
+        "graph-1",
+        event_id="planner.step.started",
+        event_ts="2026-05-11T00:01:00.000Z",
+        event_type="team.graph.planner.step",
+        payload={"step": "read-context"},
+        status="started",
+    ) == {"event": {"uuid": "event-1"}}
+    assert route.calls.last.request.content == (
+        b'{"eventId":"planner.step.started",'
+        b'"eventTs":"2026-05-11T00:01:00.000Z",'
+        b'"eventType":"team.graph.planner.step",'
+        b'"payload":{"step":"read-context"},'
+        b'"status":"started"}'
+    )
+
+
+@respx.mock
 def test_sops_resource_reads_readiness():
     route = respx.get("http://test/api/v1/projects/project-1/sops/sop-1/readiness").mock(
         return_value=httpx.Response(
