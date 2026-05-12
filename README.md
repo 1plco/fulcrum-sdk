@@ -91,6 +91,12 @@ claims = client.team_runtime.claim_ready_nodes(
     idempotency_key="claim-node-wave-1",
     limit=1,
 )
+attempt = client.team_runtime.create_node_attempt(
+    "team-uuid",
+    "node-uuid",
+    graph_uuid=graph["graph"]["uuid"],
+    idempotency_key="retry-node-uuid-1",
+)
 node_update = client.team_runtime.update_node(
     "team-uuid",
     "node-uuid",

@@ -208,3 +208,22 @@ class TeamRuntimeResource(BaseResource):
                 status=status,
             ),
         )
+
+    def create_node_attempt(
+        self,
+        team_uuid: str,
+        node_uuid: str,
+        *,
+        graph_uuid: str,
+        idempotency_key: str | None = None,
+        source_artifact_uuids: list[str] | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._team_path(team_uuid, "runtime", "nodes", node_uuid, "attempts"),
+            json=self._clean_params(
+                graphUuid=graph_uuid,
+                idempotencyKey=idempotency_key,
+                sourceArtifactUuids=source_artifact_uuids,
+            ),
+        )

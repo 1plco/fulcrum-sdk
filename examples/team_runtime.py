@@ -143,6 +143,24 @@ def claim_team_ready_nodes(
     )
 
 
+def create_team_node_attempt(
+    team_uuid: str,
+    node_uuid: str,
+    *,
+    graph_uuid: str,
+    idempotency_key: str,
+    source_artifact_uuids: list[str] | None = None,
+) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.team_runtime.create_node_attempt(
+        team_uuid,
+        node_uuid,
+        graph_uuid=graph_uuid,
+        idempotency_key=idempotency_key,
+        source_artifact_uuids=source_artifact_uuids,
+    )
+
+
 def complete_team_node(
     team_uuid: str,
     node_uuid: str,
