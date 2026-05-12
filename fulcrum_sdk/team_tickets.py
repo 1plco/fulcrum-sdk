@@ -95,6 +95,19 @@ class TeamTicketsResource(BaseResource):
             self._team_path(team_uuid, "tickets", ticket_uuid, "runs", run_uuid),
         )
 
+    def pause_run(self, team_uuid: str, ticket_uuid: str, run_uuid: str) -> JsonDict:
+        return self._request(
+            "POST",
+            self._team_path(
+                team_uuid,
+                "tickets",
+                ticket_uuid,
+                "runs",
+                run_uuid,
+                "pause",
+            ),
+        )
+
     def list_run_events(
         self,
         team_uuid: str,

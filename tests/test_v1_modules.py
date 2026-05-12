@@ -188,12 +188,22 @@ def test_operator_and_team_ticket_routes():
             json={"ok": True, "data": {"runUuid": "run-1"}},
         )
     )
+    team_pause_route = respx.post(
+        "http://test/api/v1/teams/team-1/tickets/ticket-1/runs/run-1/pause"
+    ).mock(
+        return_value=httpx.Response(
+            200,
+            json={"ok": True, "data": {"paused": True}},
+        )
+    )
 
     client = FulcrumClient(base_url="http://test", api_key="token")
     assert client.operator.plan_canvas_builder("project-1", "canvas-1", {}) == {"run": "run-1"}
     assert client.team_tickets.execute("team-1", "ticket-1") == {"runUuid": "run-1"}
+    assert client.team_tickets.pause_run("team-1", "ticket-1", "run-1") == {"paused": True}
     assert operator_route.called
     assert team_route.calls.last.request.content == b"{}"
+    assert team_pause_route.called
 
 
 @respx.mock

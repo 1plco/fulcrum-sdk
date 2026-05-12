@@ -126,6 +126,7 @@ node_update = client.team_runtime.update_node(
     result_summary="SOP result is ready.",
     status="completed",
 )
+client.team_tickets.pause_run("team-uuid", "team-ticket-uuid", "team-run-uuid")
 
 # Create and execute a project ticket.
 created = client.tickets.create("project-uuid", "Run the billing SOP")
