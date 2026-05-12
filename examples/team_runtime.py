@@ -143,6 +143,25 @@ def claim_team_ready_nodes(
     )
 
 
+def complete_team_node(
+    team_uuid: str,
+    node_uuid: str,
+    *,
+    attempt_uuid: str,
+    output_artifact_uuid: str,
+    result_summary: str,
+) -> dict[str, Any]:
+    client = FulcrumClient.from_env()
+    return client.team_runtime.update_node(
+        team_uuid,
+        node_uuid,
+        attempt_uuid=attempt_uuid,
+        output_artifact_uuid=output_artifact_uuid,
+        result_summary=result_summary,
+        status="completed",
+    )
+
+
 def create_and_execute_project_ticket(project_uuid: str, prompt: str) -> dict[str, Any]:
     client = FulcrumClient.from_env()
     created = client.tickets.create(project_uuid, prompt)

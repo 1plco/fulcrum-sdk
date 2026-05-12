@@ -222,6 +222,35 @@ def test_team_runtime_claims_ready_nodes():
 
 
 @respx.mock
+def test_team_runtime_updates_nodes():
+    route = respx.patch("http://test/api/v1/teams/team-1/runtime/nodes/node-1").mock(
+        return_value=httpx.Response(
+            200,
+            json={"ok": True, "data": {"node": {"status": "completed"}}},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="runtime-token")
+
+    assert client.team_runtime.update_node(
+        "team-1",
+        "node-1",
+        attempt_uuid="attempt-1",
+        output_artifact_uuid="artifact-1",
+        output_json={"answer": "ready"},
+        result_summary="Ready.",
+        status="completed",
+    ) == {"node": {"status": "completed"}}
+    assert route.calls.last.request.content == (
+        b'{"attemptUuid":"attempt-1",'
+        b'"outputArtifactUuid":"artifact-1",'
+        b'"outputJson":{"answer":"ready"},'
+        b'"resultSummary":"Ready.",'
+        b'"status":"completed"}'
+    )
+
+
+@respx.mock
 def test_sops_resource_reads_readiness():
     route = respx.get("http://test/api/v1/projects/project-1/sops/sop-1/readiness").mock(
         return_value=httpx.Response(

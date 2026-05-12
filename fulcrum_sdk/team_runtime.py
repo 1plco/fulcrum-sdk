@@ -181,3 +181,30 @@ class TeamRuntimeResource(BaseResource):
                 sourceArtifactUuidsByNodeUuid=source_artifact_uuids_by_node_uuid,
             ),
         )
+
+    def update_node(
+        self,
+        team_uuid: str,
+        node_uuid: str,
+        *,
+        attempt_uuid: str,
+        status: str,
+        error_message: str | None = None,
+        output_artifact_uuid: str | None = None,
+        output_json: JsonDict | None = None,
+        response_json: JsonDict | None = None,
+        result_summary: str | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "PATCH",
+            self._team_path(team_uuid, "runtime", "nodes", node_uuid),
+            json=self._clean_params(
+                attemptUuid=attempt_uuid,
+                errorMessage=error_message,
+                outputArtifactUuid=output_artifact_uuid,
+                outputJson=output_json,
+                responseJson=response_json,
+                resultSummary=result_summary,
+                status=status,
+            ),
+        )

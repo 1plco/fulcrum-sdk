@@ -91,6 +91,14 @@ claims = client.team_runtime.claim_ready_nodes(
     idempotency_key="claim-node-wave-1",
     limit=1,
 )
+node_update = client.team_runtime.update_node(
+    "team-uuid",
+    "node-uuid",
+    attempt_uuid="attempt-uuid",
+    output_artifact_uuid=artifact["artifact"]["uuid"],
+    result_summary="SOP result is ready.",
+    status="completed",
+)
 
 # Create and execute a project ticket.
 created = client.tickets.create("project-uuid", "Run the billing SOP")
