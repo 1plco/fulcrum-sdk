@@ -104,6 +104,7 @@ def create_team_artifact(
     kind: str,
     summary: str,
     graph_node_uuid: str | None = None,
+    idempotency_key: str | None = None,
 ) -> dict[str, Any]:
     client = FulcrumClient.from_env()
     return client.team_runtime.create_artifact(
@@ -111,6 +112,7 @@ def create_team_artifact(
         content=content,
         graph_node_uuid=graph_node_uuid,
         graph_uuid=graph_uuid,
+        idempotency_key=idempotency_key,
         kind=kind,
         summary=summary,
     )

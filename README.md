@@ -81,6 +81,7 @@ artifact = client.team_runtime.create_artifact(
     "team-uuid",
     content={"answer": "ready"},
     graph_uuid=graph["graph"]["uuid"],
+    idempotency_key="artifact-node-1",
     kind="node_output",
     summary="SOP result is ready.",
 )

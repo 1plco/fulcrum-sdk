@@ -9,6 +9,11 @@ from fulcrum_sdk.models import JsonDict
 class TeamRuntimeResource(BaseResource):
     """Client for team-ticket runtime-only orchestration endpoints."""
 
+    def _idempotency_headers(self, idempotency_key: str | None) -> dict[str, str] | None:
+        if not idempotency_key:
+            return None
+        return {"Idempotency-Key": idempotency_key}
+
     def context(self, team_uuid: str) -> JsonDict:
         return self._request("GET", self._team_path(team_uuid, "runtime", "context"))
 
@@ -22,6 +27,7 @@ class TeamRuntimeResource(BaseResource):
         return self._request(
             "POST",
             self._team_path(team_uuid, "runtime", "graphs"),
+            headers=self._idempotency_headers(idempotency_key),
             json=self._clean_params(draft=draft, idempotencyKey=idempotency_key),
         )
 
@@ -123,6 +129,7 @@ class TeamRuntimeResource(BaseResource):
         redaction: JsonDict | None = None,
         schema_id: str | None = None,
         schema_version: int | None = None,
+        idempotency_key: str | None = None,
         source_artifact_hashes: JsonDict | None = None,
         source_artifact_uuids: list[str] | None = None,
         token_estimate: int | None = None,
@@ -131,6 +138,7 @@ class TeamRuntimeResource(BaseResource):
         return self._request(
             "POST",
             self._team_path(team_uuid, "runtime", "artifacts"),
+            headers=self._idempotency_headers(idempotency_key),
             json=self._clean_params(
                 artifactRefs=artifact_refs,
                 content=content,
@@ -138,6 +146,7 @@ class TeamRuntimeResource(BaseResource):
                 dataClasses=data_classes,
                 graphNodeUuid=graph_node_uuid,
                 graphUuid=graph_uuid,
+                idempotencyKey=idempotency_key,
                 kind=kind,
                 nodeAttemptUuid=node_attempt_uuid,
                 provenance=provenance,
@@ -197,6 +206,7 @@ class TeamRuntimeResource(BaseResource):
                 "nodes",
                 "claim-ready",
             ),
+            headers=self._idempotency_headers(idempotency_key),
             json=self._clean_params(
                 allowedNodeTypes=allowed_node_types,
                 idempotencyKey=idempotency_key,
@@ -244,6 +254,7 @@ class TeamRuntimeResource(BaseResource):
         return self._request(
             "POST",
             self._team_path(team_uuid, "runtime", "nodes", node_uuid, "attempts"),
+            headers=self._idempotency_headers(idempotency_key),
             json=self._clean_params(
                 graphUuid=graph_uuid,
                 idempotencyKey=idempotency_key,
@@ -269,6 +280,7 @@ class TeamRuntimeResource(BaseResource):
                 node_uuid,
                 "project-ticket",
             ),
+            headers=self._idempotency_headers(idempotency_key),
             json=self._clean_params(
                 graphUuid=graph_uuid,
                 idempotencyKey=idempotency_key,

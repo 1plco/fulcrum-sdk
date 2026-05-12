@@ -201,6 +201,7 @@ def test_team_runtime_creates_and_reads_artifacts():
         "team-1",
         content={"answer": "ready"},
         graph_uuid="graph-1",
+        idempotency_key="artifact-node-1",
         kind="node_output",
         summary="Ready.",
         artifact_refs=[{"kind": "ticket", "uuid": "ticket-1"}],
@@ -215,10 +216,12 @@ def test_team_runtime_creates_and_reads_artifacts():
         b'"content":{"answer":"ready"},'
         b'"dataClasses":["internal"],'
         b'"graphUuid":"graph-1",'
+        b'"idempotencyKey":"artifact-node-1",'
         b'"kind":"node_output",'
         b'"schemaId":"answer.v1",'
         b'"summary":"Ready."}'
     )
+    assert create_route.calls.last.request.headers["Idempotency-Key"] == "artifact-node-1"
     assert get_route.called
 
 
@@ -268,6 +271,7 @@ def test_team_runtime_claims_ready_nodes():
         b'"limit":2,'
         b'"sourceArtifactUuidsByNodeUuid":{"node-1":["artifact-1"]}}'
     )
+    assert route.calls.last.request.headers["Idempotency-Key"] == "claim-1"
 
 
 @respx.mock
@@ -320,6 +324,7 @@ def test_team_runtime_creates_node_attempts():
     assert route.calls.last.request.content == (
         b'{"graphUuid":"graph-1","idempotencyKey":"attempt-1","sourceArtifactUuids":["artifact-1"]}'
     )
+    assert route.calls.last.request.headers["Idempotency-Key"] == "attempt-1"
 
 
 @respx.mock
@@ -354,6 +359,7 @@ def test_team_runtime_executes_project_ticket_nodes():
         b'"idempotencyKey":"project-node-1",'
         b'"sourceArtifactUuids":["artifact-1"]}'
     )
+    assert route.calls.last.request.headers["Idempotency-Key"] == "project-node-1"
 
 
 @respx.mock
