@@ -70,7 +70,9 @@ def test_team_runtime_graph_and_approval_routes():
     client = FulcrumClient(base_url="http://test", api_key="runtime-token")
     draft = {"nodes": [], "summary": "Plan"}
 
-    assert client.team_runtime.submit_graph("team-1", draft) == {"graph": {"uuid": "graph-1"}}
+    assert client.team_runtime.submit_graph("team-1", draft, idempotency_key="draft-1") == {
+        "graph": {"uuid": "graph-1"}
+    }
     assert client.team_runtime.get_graph("team-1", "graph-1") == {
         "edges": [],
         "graph": {"uuid": "graph-1"},
@@ -85,7 +87,10 @@ def test_team_runtime_graph_and_approval_routes():
         "status": "pending",
         "uuid": "approval-1",
     }
-    assert graph_route.calls.last.request.content == b'{"draft":{"nodes":[],"summary":"Plan"}}'
+    assert graph_route.calls.last.request.content == (
+        b'{"draft":{"nodes":[],"summary":"Plan"},"idempotencyKey":"draft-1"}'
+    )
+    assert graph_route.calls.last.request.headers["Idempotency-Key"] == "draft-1"
     assert approval_route.calls.last.request.content == (
         b'{"graphUuid":"graph-1","prompt":"Please approve"}'
     )
