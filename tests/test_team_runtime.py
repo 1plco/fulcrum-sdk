@@ -94,6 +94,34 @@ def test_team_runtime_graph_and_approval_routes():
 
 
 @respx.mock
+def test_team_runtime_requests_graph_amendment_approval():
+    route = respx.post("http://test/api/v1/teams/team-1/runtime/approvals").mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"approval": {"uuid": "approval-1"}}},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="runtime-token")
+
+    assert client.team_runtime.request_approval(
+        "team-1",
+        amendment_reason="Scope changed after the approved graph.",
+        approval_kind="graph_amendment",
+        base_graph_uuid="graph-1",
+        graph_uuid="graph-2",
+        prompt="Please approve the amended graph.",
+    ) == {"approval": {"uuid": "approval-1"}}
+    assert route.calls.last.request.content == (
+        b'{"amendmentReason":"Scope changed after the approved graph.",'
+        b'"approvalKind":"graph_amendment",'
+        b'"baseGraphUuid":"graph-1",'
+        b'"graphUuid":"graph-2",'
+        b'"prompt":"Please approve the amended graph."}'
+    )
+
+
+@respx.mock
 def test_team_runtime_appends_graph_events():
     route = respx.post("http://test/api/v1/teams/team-1/runtime/graphs/graph-1/events").mock(
         return_value=httpx.Response(

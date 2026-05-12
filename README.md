@@ -54,6 +54,14 @@ approval = client.team_runtime.request_approval(
     graph_uuid=graph["graph"]["uuid"],
     prompt="Please approve this execution graph.",
 )
+amendment = client.team_runtime.request_approval(
+    "team-uuid",
+    amendment_reason="Scope changed after the approved graph.",
+    approval_kind="graph_amendment",
+    base_graph_uuid="approved-graph-uuid",
+    graph_uuid="replacement-graph-uuid",
+    prompt="Please approve this replacement graph.",
+)
 client.team_runtime.append_graph_event(
     "team-uuid",
     graph["graph"]["uuid"],

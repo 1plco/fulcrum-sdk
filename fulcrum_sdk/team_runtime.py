@@ -35,13 +35,22 @@ class TeamRuntimeResource(BaseResource):
         self,
         team_uuid: str,
         *,
+        amendment_reason: str | None = None,
+        approval_kind: str | None = None,
+        base_graph_uuid: str | None = None,
         graph_uuid: str,
         prompt: str | None = None,
     ) -> JsonDict:
         return self._request(
             "POST",
             self._team_path(team_uuid, "runtime", "approvals"),
-            json=self._clean_params(graphUuid=graph_uuid, prompt=prompt),
+            json=self._clean_params(
+                amendmentReason=amendment_reason,
+                approvalKind=approval_kind,
+                baseGraphUuid=base_graph_uuid,
+                graphUuid=graph_uuid,
+                prompt=prompt,
+            ),
         )
 
     def get_approval(self, team_uuid: str, approval_uuid: str) -> JsonDict:

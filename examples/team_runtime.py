@@ -34,6 +34,8 @@ def submit_team_graph_for_approval(
     team_uuid: str,
     draft: dict[str, Any],
     *,
+    amendment_reason: str | None = None,
+    base_graph_uuid: str | None = None,
     idempotency_key: str | None = None,
     prompt: str | None = None,
 ) -> dict[str, Any]:
@@ -46,6 +48,9 @@ def submit_team_graph_for_approval(
     graph_uuid = graph_result["graph"]["uuid"]
     return client.team_runtime.request_approval(
         team_uuid,
+        amendment_reason=amendment_reason,
+        approval_kind="graph_amendment" if base_graph_uuid else None,
+        base_graph_uuid=base_graph_uuid,
         graph_uuid=graph_uuid,
         prompt=prompt,
     )
