@@ -173,6 +173,7 @@ class TeamRuntimeResource(BaseResource):
         team_uuid: str,
         graph_uuid: str,
         *,
+        allowed_node_types: list[str] | None = None,
         idempotency_key: str | None = None,
         limit: int | None = None,
         source_artifact_uuids_by_node_uuid: dict[str, list[str]] | None = None,
@@ -188,6 +189,7 @@ class TeamRuntimeResource(BaseResource):
                 "claim-ready",
             ),
             json=self._clean_params(
+                allowedNodeTypes=allowed_node_types,
                 idempotencyKey=idempotency_key,
                 limit=limit,
                 sourceArtifactUuidsByNodeUuid=source_artifact_uuids_by_node_uuid,

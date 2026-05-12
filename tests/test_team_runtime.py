@@ -229,12 +229,14 @@ def test_team_runtime_claims_ready_nodes():
     assert client.team_runtime.claim_ready_nodes(
         "team-1",
         "graph-1",
+        allowed_node_types=["team_internal_db_query", "context_transform"],
         idempotency_key="claim-1",
         limit=2,
         source_artifact_uuids_by_node_uuid={"node-1": ["artifact-1"]},
     ) == {"claims": [{"node": {"uuid": "node-1"}}]}
     assert route.calls.last.request.content == (
-        b'{"idempotencyKey":"claim-1",'
+        b'{"allowedNodeTypes":["team_internal_db_query","context_transform"],'
+        b'"idempotencyKey":"claim-1",'
         b'"limit":2,'
         b'"sourceArtifactUuidsByNodeUuid":{"node-1":["artifact-1"]}}'
     )
