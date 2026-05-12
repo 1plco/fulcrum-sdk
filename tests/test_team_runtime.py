@@ -39,6 +39,19 @@ def test_team_runtime_graph_and_approval_routes():
             json={"ok": True, "data": {"graph": {"uuid": "graph-1"}}},
         )
     )
+    graph_read_route = respx.get("http://test/api/v1/teams/team-1/runtime/graphs/graph-1").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "ok": True,
+                "data": {
+                    "edges": [],
+                    "graph": {"uuid": "graph-1"},
+                    "nodes": [],
+                },
+            },
+        )
+    )
     approval_route = respx.post("http://test/api/v1/teams/team-1/runtime/approvals").mock(
         return_value=httpx.Response(
             201,
@@ -58,6 +71,11 @@ def test_team_runtime_graph_and_approval_routes():
     draft = {"nodes": [], "summary": "Plan"}
 
     assert client.team_runtime.submit_graph("team-1", draft) == {"graph": {"uuid": "graph-1"}}
+    assert client.team_runtime.get_graph("team-1", "graph-1") == {
+        "edges": [],
+        "graph": {"uuid": "graph-1"},
+        "nodes": [],
+    }
     assert client.team_runtime.request_approval(
         "team-1",
         graph_uuid="graph-1",
@@ -71,6 +89,7 @@ def test_team_runtime_graph_and_approval_routes():
     assert approval_route.calls.last.request.content == (
         b'{"graphUuid":"graph-1","prompt":"Please approve"}'
     )
+    assert graph_read_route.called
     assert approval_read_route.called
 
 

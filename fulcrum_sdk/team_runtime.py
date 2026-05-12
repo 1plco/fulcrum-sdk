@@ -25,6 +25,12 @@ class TeamRuntimeResource(BaseResource):
             json=self._clean_params(draft=draft, idempotencyKey=idempotency_key),
         )
 
+    def get_graph(self, team_uuid: str, graph_uuid: str) -> JsonDict:
+        return self._request(
+            "GET",
+            self._team_path(team_uuid, "runtime", "graphs", graph_uuid),
+        )
+
     def request_approval(
         self,
         team_uuid: str,
