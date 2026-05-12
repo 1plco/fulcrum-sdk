@@ -83,6 +83,7 @@ def create_team_checkpoint(
     reason: str,
     summary: str,
     graph_uuid: str | None = None,
+    idempotency_key: str | None = None,
     sandbox_id: str | None = None,
 ) -> dict[str, Any]:
     client = FulcrumClient.from_env()
@@ -90,6 +91,7 @@ def create_team_checkpoint(
         team_uuid,
         checkpoint,
         graph_uuid=graph_uuid,
+        idempotency_key=idempotency_key,
         reason=reason,
         sandbox_id=sandbox_id,
         summary=summary,

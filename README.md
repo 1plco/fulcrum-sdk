@@ -74,6 +74,7 @@ checkpoint = client.team_runtime.create_checkpoint(
     "team-uuid",
     {"step": "approval-wait"},
     graph_uuid=graph["graph"]["uuid"],
+    idempotency_key="checkpoint-approval-1",
     reason="approval_wait",
     summary="Waiting for graph approval.",
 )

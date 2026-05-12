@@ -165,6 +165,7 @@ def test_team_runtime_creates_checkpoints():
         "team-1",
         {"step": "approval-wait"},
         graph_uuid="graph-1",
+        idempotency_key="checkpoint-1",
         reason="approval_wait",
         runtime_execution_uuid="runtime-1",
         sandbox_id="sandbox-1",
@@ -173,11 +174,13 @@ def test_team_runtime_creates_checkpoints():
     assert route.calls.last.request.content == (
         b'{"checkpoint":{"step":"approval-wait"},'
         b'"graphUuid":"graph-1",'
+        b'"idempotencyKey":"checkpoint-1",'
         b'"reason":"approval_wait",'
         b'"runtimeExecutionUuid":"runtime-1",'
         b'"sandboxId":"sandbox-1",'
         b'"summary":"Waiting for approval."}'
     )
+    assert route.calls.last.request.headers["Idempotency-Key"] == "checkpoint-1"
 
 
 @respx.mock

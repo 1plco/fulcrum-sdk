@@ -96,15 +96,18 @@ class TeamRuntimeResource(BaseResource):
         reason: str,
         summary: str,
         graph_uuid: str | None = None,
+        idempotency_key: str | None = None,
         runtime_execution_uuid: str | None = None,
         sandbox_id: str | None = None,
     ) -> JsonDict:
         return self._request(
             "POST",
             self._team_path(team_uuid, "runtime", "checkpoints"),
+            headers=self._idempotency_headers(idempotency_key),
             json=self._clean_params(
                 checkpoint=checkpoint,
                 graphUuid=graph_uuid,
+                idempotencyKey=idempotency_key,
                 reason=reason,
                 runtimeExecutionUuid=runtime_execution_uuid,
                 sandboxId=sandbox_id,
