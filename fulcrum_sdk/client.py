@@ -310,6 +310,7 @@ class FulcrumClient:
     def _api_error(self, status_code: int, body_text: str) -> FulcrumAPIError:
         snippet = body_text[:500]
         message = f"Fulcrum API returned {status_code}"
+        details: Any | None = None
         try:
             body = httpx.Response(status_code, content=body_text).json()
         except ValueError:
@@ -317,9 +318,83 @@ class FulcrumClient:
 
         if isinstance(body, dict):
             error = body.get("error")
-            if isinstance(error, dict) and isinstance(error.get("message"), str):
-                message = error["message"]
+            if isinstance(error, dict):
+                if isinstance(error.get("message"), str):
+                    message = error["message"]
+                details = error.get("details")
             elif isinstance(body.get("message"), str):
                 message = body["message"]
+            if details is None:
+                details = body.get("details")
 
-        return FulcrumAPIError(message, status_code, snippet)
+        details_message = self._format_error_details(details)
+        if details_message and details_message not in message:
+            message = f"{message}\n{details_message}"
+
+        return FulcrumAPIError(message, status_code, snippet, details)
+
+    def _format_error_details(self, details: Any) -> str | None:
+        if details is None:
+            return None
+
+        if isinstance(details, dict):
+            lines = [
+                line
+                for key, value in details.items()
+                for line in self._iter_error_detail_lines(value, str(key))
+            ]
+        else:
+            lines = list(self._iter_error_detail_lines(details, "details"))
+
+        if not lines:
+            return None
+
+        max_lines = 12
+        if len(lines) > max_lines:
+            remaining = len(lines) - max_lines
+            lines = lines[:max_lines] + [f"- ... {remaining} more detail(s)"]
+
+        return "\n".join(lines)
+
+    def _iter_error_detail_lines(self, value: Any, path: str) -> Iterator[str]:
+        if isinstance(value, str):
+            yield f"- {path}: {value}"
+            return
+
+        if isinstance(value, list):
+            for index, item in enumerate(value):
+                item_path = f"{path}[{index}]"
+                if isinstance(item, dict) and isinstance(item.get("message"), str):
+                    issue_path = self._format_issue_path(item.get("path"))
+                    yield f"- {issue_path or item_path}: {item['message']}"
+                    continue
+                yield from self._iter_error_detail_lines(item, item_path)
+            return
+
+        if isinstance(value, dict):
+            if isinstance(value.get("message"), str):
+                issue_path = self._format_issue_path(value.get("path"))
+                yield f"- {issue_path or path}: {value['message']}"
+                return
+
+            for key, item in value.items():
+                yield from self._iter_error_detail_lines(item, f"{path}.{key}")
+            return
+
+        if value is not None:
+            yield f"- {path}: {value}"
+
+    def _format_issue_path(self, value: Any) -> str | None:
+        if isinstance(value, str) and value:
+            return value
+        if not isinstance(value, list) or not value:
+            return None
+
+        path = ""
+        for part in value:
+            if isinstance(part, int):
+                path = f"{path}[{part}]"
+            else:
+                key = str(part)
+                path = f"{path}.{key}" if path else key
+        return path or None

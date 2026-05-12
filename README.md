@@ -114,6 +114,7 @@ attempt = client.team_runtime.create_node_attempt(
 project_node = client.team_runtime.execute_project_ticket_node(
     "team-uuid",
     "project-node-uuid",
+    attempt_uuid=attempt["claims"][0]["attempt"]["uuid"],
     graph_uuid=graph["graph"]["uuid"],
     idempotency_key="project-node-uuid-1",
 )

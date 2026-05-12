@@ -284,6 +284,7 @@ class TeamRuntimeResource(BaseResource):
         team_uuid: str,
         node_uuid: str,
         *,
+        attempt_uuid: str | None = None,
         graph_uuid: str,
         idempotency_key: str | None = None,
         source_artifact_uuids: list[str] | None = None,
@@ -299,6 +300,7 @@ class TeamRuntimeResource(BaseResource):
             ),
             headers=self._idempotency_headers(idempotency_key),
             json=self._clean_params(
+                attemptUuid=attempt_uuid,
                 graphUuid=graph_uuid,
                 idempotencyKey=idempotency_key,
                 sourceArtifactUuids=source_artifact_uuids,

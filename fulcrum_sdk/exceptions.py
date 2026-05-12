@@ -1,5 +1,7 @@
 """Public exceptions for the Fulcrum SDK."""
 
+from typing import Any
+
 
 class FulcrumError(Exception):
     """Base exception for all Fulcrum SDK errors."""
@@ -13,10 +15,12 @@ class FulcrumAPIError(FulcrumError):
         message: str,
         status_code: int | None = None,
         response_body: str | None = None,
+        details: Any | None = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.response_body = response_body
+        self.details = details
 
 
 class FulcrumConfigError(FulcrumError):

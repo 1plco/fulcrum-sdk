@@ -367,6 +367,7 @@ def test_team_runtime_executes_project_ticket_nodes():
     assert client.team_runtime.execute_project_ticket_node(
         "team-1",
         "node-1",
+        attempt_uuid="attempt-1",
         graph_uuid="graph-1",
         idempotency_key="project-node-1",
         source_artifact_uuids=["artifact-1"],
@@ -375,7 +376,8 @@ def test_team_runtime_executes_project_ticket_nodes():
         "projectTicketUuid": "project-ticket-1",
     }
     assert route.calls.last.request.content == (
-        b'{"graphUuid":"graph-1",'
+        b'{"attemptUuid":"attempt-1",'
+        b'"graphUuid":"graph-1",'
         b'"idempotencyKey":"project-node-1",'
         b'"sourceArtifactUuids":["artifact-1"]}'
     )
