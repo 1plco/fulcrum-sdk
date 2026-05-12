@@ -200,6 +200,7 @@ def complete_team_node(
     node_uuid: str,
     *,
     attempt_uuid: str,
+    idempotency_key: str | None = None,
     output_artifact_uuid: str,
     result_summary: str,
 ) -> dict[str, Any]:
@@ -208,6 +209,7 @@ def complete_team_node(
         team_uuid,
         node_uuid,
         attempt_uuid=attempt_uuid,
+        idempotency_key=idempotency_key,
         output_artifact_uuid=output_artifact_uuid,
         result_summary=result_summary,
         status="completed",

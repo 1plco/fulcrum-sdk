@@ -300,6 +300,7 @@ def test_team_runtime_updates_nodes():
         "team-1",
         "node-1",
         attempt_uuid="attempt-1",
+        idempotency_key="complete-node-1",
         output_artifact_uuid="artifact-1",
         output_json={"answer": "ready"},
         result_summary="Ready.",
@@ -307,11 +308,13 @@ def test_team_runtime_updates_nodes():
     ) == {"node": {"status": "completed"}}
     assert route.calls.last.request.content == (
         b'{"attemptUuid":"attempt-1",'
+        b'"idempotencyKey":"complete-node-1",'
         b'"outputArtifactUuid":"artifact-1",'
         b'"outputJson":{"answer":"ready"},'
         b'"resultSummary":"Ready.",'
         b'"status":"completed"}'
     )
+    assert route.calls.last.request.headers["Idempotency-Key"] == "complete-node-1"
 
 
 @respx.mock

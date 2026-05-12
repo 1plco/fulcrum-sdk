@@ -118,6 +118,7 @@ node_update = client.team_runtime.update_node(
     "team-uuid",
     "node-uuid",
     attempt_uuid="attempt-uuid",
+    idempotency_key="complete-node-uuid-1",
     output_artifact_uuid=artifact["artifact"]["uuid"],
     result_summary="SOP result is ready.",
     status="completed",

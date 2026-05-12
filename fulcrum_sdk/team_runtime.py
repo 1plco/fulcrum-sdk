@@ -229,6 +229,7 @@ class TeamRuntimeResource(BaseResource):
         attempt_uuid: str,
         status: str,
         error_message: str | None = None,
+        idempotency_key: str | None = None,
         output_artifact_uuid: str | None = None,
         output_json: JsonDict | None = None,
         response_json: JsonDict | None = None,
@@ -237,9 +238,11 @@ class TeamRuntimeResource(BaseResource):
         return self._request(
             "PATCH",
             self._team_path(team_uuid, "runtime", "nodes", node_uuid),
+            headers=self._idempotency_headers(idempotency_key),
             json=self._clean_params(
                 attemptUuid=attempt_uuid,
                 errorMessage=error_message,
+                idempotencyKey=idempotency_key,
                 outputArtifactUuid=output_artifact_uuid,
                 outputJson=output_json,
                 responseJson=response_json,
