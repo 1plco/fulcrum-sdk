@@ -12,11 +12,17 @@ class TeamRuntimeResource(BaseResource):
     def context(self, team_uuid: str) -> JsonDict:
         return self._request("GET", self._team_path(team_uuid, "runtime", "context"))
 
-    def submit_graph(self, team_uuid: str, draft: JsonDict) -> JsonDict:
+    def submit_graph(
+        self,
+        team_uuid: str,
+        draft: JsonDict,
+        *,
+        idempotency_key: str | None = None,
+    ) -> JsonDict:
         return self._request(
             "POST",
             self._team_path(team_uuid, "runtime", "graphs"),
-            json={"draft": draft},
+            json=self._clean_params(draft=draft, idempotencyKey=idempotency_key),
         )
 
     def request_approval(

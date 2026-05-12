@@ -34,10 +34,15 @@ def submit_team_graph_for_approval(
     team_uuid: str,
     draft: dict[str, Any],
     *,
+    idempotency_key: str | None = None,
     prompt: str | None = None,
 ) -> dict[str, Any]:
     client = FulcrumClient.from_env()
-    graph_result = client.team_runtime.submit_graph(team_uuid, draft)
+    graph_result = client.team_runtime.submit_graph(
+        team_uuid,
+        draft,
+        idempotency_key=idempotency_key,
+    )
     graph_uuid = graph_result["graph"]["uuid"]
     return client.team_runtime.request_approval(
         team_uuid,

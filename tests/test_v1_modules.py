@@ -197,6 +197,27 @@ def test_operator_and_team_ticket_routes():
 
 
 @respx.mock
+def test_team_runtime_submit_graph_sends_idempotency_key():
+    route = respx.post("http://test/api/v1/teams/team-1/runtime/graphs").mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"graph": {"uuid": "graph-1"}}},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="token")
+
+    assert client.team_runtime.submit_graph(
+        "team-1",
+        {"summary": "Plan", "nodes": []},
+        idempotency_key="draft-1",
+    ) == {"graph": {"uuid": "graph-1"}}
+    assert route.calls.last.request.content == (
+        b'{"draft":{"summary":"Plan","nodes":[]},"idempotencyKey":"draft-1"}'
+    )
+
+
+@respx.mock
 def test_teams_resource_manages_teams_and_links_projects():
     create_route = respx.post("http://test/api/v1/teams").mock(
         return_value=httpx.Response(
