@@ -52,6 +52,7 @@ graph = client.team_runtime.submit_graph("team-uuid", {"summary": "Plan", "nodes
 approval = client.team_runtime.request_approval(
     "team-uuid",
     graph_uuid=graph["graph"]["uuid"],
+    idempotency_key="approval-request-1",
     prompt="Please approve this execution graph.",
 )
 amendment = client.team_runtime.request_approval(
@@ -60,6 +61,7 @@ amendment = client.team_runtime.request_approval(
     approval_kind="graph_amendment",
     base_graph_uuid="approved-graph-uuid",
     graph_uuid="replacement-graph-uuid",
+    idempotency_key="approval-amendment-request-1",
     prompt="Please approve this replacement graph.",
 )
 client.team_runtime.append_graph_event(

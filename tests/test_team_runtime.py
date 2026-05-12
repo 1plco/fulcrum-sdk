@@ -81,6 +81,7 @@ def test_team_runtime_graph_and_approval_routes():
     assert client.team_runtime.request_approval(
         "team-1",
         graph_uuid="graph-1",
+        idempotency_key="approval-1",
         prompt="Please approve",
     ) == {"approval": {"uuid": "approval-1"}}
     assert client.team_runtime.get_approval("team-1", "approval-1") == {
@@ -92,8 +93,9 @@ def test_team_runtime_graph_and_approval_routes():
     )
     assert graph_route.calls.last.request.headers["Idempotency-Key"] == "draft-1"
     assert approval_route.calls.last.request.content == (
-        b'{"graphUuid":"graph-1","prompt":"Please approve"}'
+        b'{"graphUuid":"graph-1","idempotencyKey":"approval-1","prompt":"Please approve"}'
     )
+    assert approval_route.calls.last.request.headers["Idempotency-Key"] == "approval-1"
     assert graph_read_route.called
     assert approval_read_route.called
 

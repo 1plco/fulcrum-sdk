@@ -52,6 +52,7 @@ def submit_team_graph_for_approval(
         approval_kind="graph_amendment" if base_graph_uuid else None,
         base_graph_uuid=base_graph_uuid,
         graph_uuid=graph_uuid,
+        idempotency_key=idempotency_key,
         prompt=prompt,
     )
 

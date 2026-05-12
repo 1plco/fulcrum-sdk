@@ -45,16 +45,19 @@ class TeamRuntimeResource(BaseResource):
         approval_kind: str | None = None,
         base_graph_uuid: str | None = None,
         graph_uuid: str,
+        idempotency_key: str | None = None,
         prompt: str | None = None,
     ) -> JsonDict:
         return self._request(
             "POST",
             self._team_path(team_uuid, "runtime", "approvals"),
+            headers=self._idempotency_headers(idempotency_key),
             json=self._clean_params(
                 amendmentReason=amendment_reason,
                 approvalKind=approval_kind,
                 baseGraphUuid=base_graph_uuid,
                 graphUuid=graph_uuid,
+                idempotencyKey=idempotency_key,
                 prompt=prompt,
             ),
         )
