@@ -161,6 +161,39 @@ client = get_dispatch_client()  # Configured from FULCRUM_* env vars
 client.dispatch_text("Processing started")
 ```
 
+Guidance is used when a project-ticket agent encounters a severe SOP edge case
+that `sop.md` does not cover:
+
+```python
+from fulcrum_sdk._internal.guidance import get_guidance_client
+
+guidance = get_guidance_client()
+guidance.seek_guidance(
+    question="The SOP does not say what to do when the invoice total is negative.",
+    sop_section="Validation",
+    severity="severe",
+    context={"invoice_id": invoice_id},
+)
+```
+
+`seek_guidance()` raises `GuidanceRequested` after Fulcrum accepts the request
+so execution stops instead of continuing with guessed policy.
+
+Semantic SOP improvements are separate from code improvements:
+
+```python
+from fulcrum_sdk._internal.sop_improvements import get_sop_improvements_client
+
+sop_improvements = get_sop_improvements_client()
+sop_improvements.create_sop_improvement(
+    title="Specify approval for negative totals",
+    observed_gap="The SOP does not say who can approve negative invoice totals.",
+    suggested_change="Require finance-manager approval before processing negative totals.",
+    section_anchor="Validation",
+    dedupe_key="validation-negative-total-approval",
+)
+```
+
 ## Environment Variables
 
 The SDK clients are configured via environment variables:
@@ -184,12 +217,14 @@ Team-ticket runtimes may also receive:
 ### Dispatch Client
 
 Required:
+
 - `FULCRUM_DISPATCH_URL` - The dispatch API endpoint URL
 - `FULCRUM_RUN_TOKEN` or `FULCRUM_DISPATCH_TOKEN` - Authentication token
 - `FULCRUM_TICKET_UUID` - The ticket UUID for this session
 - `FULCRUM_RUN_UUID` - The run UUID for this execution
 
 Optional:
+
 - `FULCRUM_MESSAGE_UUID` - The message UUID (if applicable)
 - `FULCRUM_DISPATCH_DEBUG` - Set to "1" to enable debug logging
 - `FULCRUM_DISPATCH_TIMEOUT_MS` - Request timeout in milliseconds (default: 1500)
@@ -198,16 +233,50 @@ Optional:
 ### Improvements Client
 
 Required:
+
 - `FULCRUM_IMPROVEMENTS_URL` - The improvements API endpoint URL
 - `FULCRUM_RUN_TOKEN` or `FULCRUM_DISPATCH_TOKEN` - Authentication token
 - `FULCRUM_RUN_UUID` - The run UUID for this execution
 
 Optional:
+
 - `FULCRUM_PROJECT_UUID` - The project UUID
 - `FULCRUM_TICKET_UUID` - The ticket UUID
 - `FULCRUM_IMPROVEMENTS_DEBUG` - Set to "1" to enable debug logging
 - `FULCRUM_IMPROVEMENTS_TIMEOUT_MS` - Request timeout in milliseconds (default: 1500)
 - `FULCRUM_IMPROVEMENTS_MAX_BYTES` - Maximum payload size (default: 65536)
+
+### Guidance Client
+
+Required:
+
+- `FULCRUM_GUIDANCE_URL` - The guidance API endpoint URL
+- `FULCRUM_RUN_TOKEN` or `FULCRUM_DISPATCH_TOKEN` - Authentication token
+- `FULCRUM_TICKET_UUID` - The ticket UUID for this session
+- `FULCRUM_RUN_UUID` - The run UUID for this execution
+
+Optional:
+
+- `FULCRUM_PROJECT_UUID` - The project UUID
+- `FULCRUM_MESSAGE_UUID` - The assistant message UUID
+- `FULCRUM_GUIDANCE_DEBUG` - Set to "1" to enable debug logging
+- `FULCRUM_GUIDANCE_TIMEOUT_MS` - Request timeout in milliseconds (default: 5000)
+- `FULCRUM_GUIDANCE_MAX_BYTES` - Maximum context payload size (default: 65536)
+
+### SOP Improvements Client
+
+Required:
+
+- `FULCRUM_SOP_IMPROVEMENTS_URL` - The SOP improvements API endpoint URL
+- `FULCRUM_RUN_TOKEN` or `FULCRUM_DISPATCH_TOKEN` - Authentication token
+- `FULCRUM_RUN_UUID` - The run UUID for this execution
+
+Optional:
+
+- `FULCRUM_PROJECT_UUID` - The project UUID
+- `FULCRUM_TICKET_UUID` - The ticket UUID
+- `FULCRUM_SOP_IMPROVEMENTS_DEBUG` - Set to "1" to enable debug logging
+- `FULCRUM_SOP_IMPROVEMENTS_TIMEOUT_MS` - Request timeout in milliseconds (default: 1500)
 
 ## API Reference
 
@@ -274,6 +343,40 @@ Delete an improvement. Returns `True` on success, `False` on any error.
 #### `emit_improvement_event(improvement_uuid, action, payload=None) -> bool`
 
 Emit an event for an improvement. Returns `True` on success, `False` on any error.
+
+### GuidanceClient (System-Level)
+
+Located in `fulcrum_sdk._internal.guidance`.
+
+#### `from_env() -> GuidanceClient`
+
+Create a client from environment variables. Returns a disabled client if
+required variables are missing.
+
+#### `seek_guidance(question, sop_section=None, severity='severe', context=None, raise_on_accept=True) -> GuidanceRequestResult | bool`
+
+Persist a blocking user guidance request. Returns `False` if disabled or the
+request fails. Raises `GuidanceRequested` after a successful accepted request
+unless `raise_on_accept=False` is passed.
+
+### SopImprovementsClient (System-Level)
+
+Located in `fulcrum_sdk._internal.sop_improvements`.
+
+#### `from_env() -> SopImprovementsClient`
+
+Create a client from environment variables. Returns a no-op client if required
+variables are missing.
+
+#### `list_sop_improvements(project_uuid=None, status=None) -> list[SopImprovement]`
+
+List semantic SOP improvements for the current run or project. Returns empty
+list on any error.
+
+#### `create_sop_improvement(title, description=None, observed_gap=None, suggested_change=None, section_anchor=None, severity='normal', dedupe_key=None, source_guidance_request_uuid=None) -> bool`
+
+Create a semantic SOP improvement. Returns `True` on success, `False` on any
+error.
 
 ### FulcrumClient (Public Runtime API)
 
