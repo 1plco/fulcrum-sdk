@@ -166,7 +166,7 @@ API tokens are organization-wide:
 
 ```bash
 export FULCRUM_API_BASE_URL="https://app.example.com"
-export FULCRUM_API_KEY="fcrm_live_..."
+export FULCRUM_API_KEY="stdops-..."
 ```
 
 ```python
@@ -181,7 +181,7 @@ You can also pass the token explicitly:
 ```python
 client = FulcrumClient(
     base_url="https://app.example.com",
-    api_key="fcrm_live_...",
+    api_key="stdops-...",
 )
 ```
 
