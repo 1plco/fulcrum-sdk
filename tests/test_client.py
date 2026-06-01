@@ -23,6 +23,27 @@ def test_client_from_env_reads_runtime_token_and_base_url():
 
 
 @respx.mock
+def test_client_from_env_prefers_external_api_key_over_runtime_tokens():
+    route = respx.get("http://test/api/v1/projects").mock(
+        return_value=httpx.Response(200, json={"ok": True, "data": []})
+    )
+    env = {
+        "FULCRUM_API_BASE_URL": "http://test",
+        "FULCRUM_API_KEY": "user-api-token",
+        "FULCRUM_RUNTIME_TOKEN": "runtime-token",
+        "FULCRUM_RUN_TOKEN": "run-token",
+    }
+
+    with patch.dict(os.environ, env, clear=True):
+        client = FulcrumClient.from_env()
+        client.request("GET", "/api/v1/projects")
+
+    assert route.calls.last.request.headers["authorization"] == (
+        "Bearer user-api-token"
+    )
+
+
+@respx.mock
 def test_client_request_unwraps_success_data_and_sends_auth():
     route = respx.get("http://test/api/v1/projects").mock(
         return_value=httpx.Response(

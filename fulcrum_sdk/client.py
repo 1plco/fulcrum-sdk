@@ -58,8 +58,8 @@ class FulcrumClient:
 
         self._api_key = (
             api_key
-            or os.environ.get("FULCRUM_RUNTIME_TOKEN")
             or os.environ.get("FULCRUM_API_KEY")
+            or os.environ.get("FULCRUM_RUNTIME_TOKEN")
             or os.environ.get("FULCRUM_RUN_TOKEN")
         )
         self._base_url = resolved_base_url.rstrip("/")
@@ -85,7 +85,7 @@ class FulcrumClient:
 
     @classmethod
     def from_env(cls) -> FulcrumClient:
-        """Create a client from FULCRUM_API_BASE_URL and FULCRUM_RUNTIME_TOKEN."""
+        """Create a client from Fulcrum API base URL and bearer-token env vars."""
         return cls()
 
     @property

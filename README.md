@@ -26,11 +26,12 @@ dependencies = [
 
 ## Usage
 
-### Public Runtime API
+### Public v1 API
 
-Use `FulcrumClient.from_env()` inside team-ticket and project-ticket runtimes.
-The runtime should receive `FULCRUM_API_BASE_URL` and
-`FULCRUM_RUNTIME_TOKEN` from Fulcrum.
+Use `FulcrumClient.from_env()` for external v1 API clients and inside
+team-ticket or project-ticket runtimes. External clients should set
+`FULCRUM_API_BASE_URL` and `FULCRUM_API_KEY`. Fulcrum-managed runtimes receive
+`FULCRUM_API_BASE_URL` and runtime bearer tokens from Fulcrum.
 
 ```python
 from fulcrum_sdk import FulcrumClient
@@ -148,6 +149,49 @@ The public client exposes typed resource groups for current v1 routes:
 `client.request(method, path, json=None, params=None, stream=False)` remains
 available for new `/api/v1` routes before a typed wrapper exists.
 
+### External API Tokens
+
+Create long-lived API tokens from Fulcrum under **Organization -> API Tokens**.
+The token plaintext is shown once when minted. If it is lost, revoke it and
+create a replacement token.
+
+API tokens are organization-wide:
+
+- delegated user tokens use the owner's current project, team, and organization
+  access.
+- org admin tokens are available only to organization admins and 1PL admins and
+  can access the org's teams, projects, and admin-level v1 routes.
+- tokens can expire at a chosen time or be created without an expiry; revoked
+  or expired tokens are rejected.
+
+```bash
+export FULCRUM_API_BASE_URL="https://app.example.com"
+export FULCRUM_API_KEY="fcrm_live_..."
+```
+
+```python
+from fulcrum_sdk import FulcrumClient
+
+client = FulcrumClient.from_env()
+projects = client.projects.list()
+```
+
+You can also pass the token explicitly:
+
+```python
+client = FulcrumClient(
+    base_url="https://app.example.com",
+    api_key="fcrm_live_...",
+)
+```
+
+For raw HTTP clients, send the same token as a bearer token:
+
+```bash
+curl "$FULCRUM_API_BASE_URL/api/v1/projects" \
+  -H "Authorization: Bearer $FULCRUM_API_KEY"
+```
+
 ### System-Level APIs
 
 The `_internal` module contains system-level APIs used by Fulcrum runtime.
@@ -200,10 +244,18 @@ The SDK clients are configured via environment variables:
 
 ### Authentication
 
-- `FULCRUM_API_BASE_URL` - Base URL for `/api/v1` runtime calls
+- `FULCRUM_API_BASE_URL` - Base URL for `/api/v1` calls
+- `FULCRUM_API_KEY` - User-minted external API token
 - `FULCRUM_RUNTIME_TOKEN` - Team or project runtime bearer token
-- `FULCRUM_RUN_TOKEN` - Authentication token (preferred)
+- `FULCRUM_RUN_TOKEN` - Legacy runtime authentication token
 - `FULCRUM_DISPATCH_TOKEN` - Deprecated, use `FULCRUM_RUN_TOKEN` instead
+
+`FulcrumClient` resolves bearer tokens in this order:
+
+1. explicit `api_key=...`
+2. `FULCRUM_API_KEY`
+3. `FULCRUM_RUNTIME_TOKEN`
+4. `FULCRUM_RUN_TOKEN`
 
 Runtime tokens are enforced server-side. The SDK does not decide team or project
 authorization locally; disallowed calls return Fulcrum API errors such as 403.
@@ -378,14 +430,15 @@ list on any error.
 Create a semantic SOP improvement. Returns `True` on success, `False` on any
 error.
 
-### FulcrumClient (Public Runtime API)
+### FulcrumClient (Public v1 API)
 
 Located in `fulcrum_sdk`.
 
 #### `from_env() -> FulcrumClient`
 
-Create a v1 API client from `FULCRUM_API_BASE_URL` and
-`FULCRUM_RUNTIME_TOKEN`.
+Create a v1 API client from `FULCRUM_API_BASE_URL` and a bearer token
+environment variable. External clients should use `FULCRUM_API_KEY`; Fulcrum
+runtimes receive `FULCRUM_RUNTIME_TOKEN` or `FULCRUM_RUN_TOKEN`.
 
 #### `request(method, path, json=None, params=None, headers=None, stream=False)`
 
