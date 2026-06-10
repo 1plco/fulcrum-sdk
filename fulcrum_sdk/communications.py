@@ -1,0 +1,177 @@
+"""Project communications client for Fulcrum v1 APIs."""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+
+from fulcrum_sdk._resource import BaseResource
+from fulcrum_sdk.models import JsonDict
+
+
+class CommunicationsResource(BaseResource):
+    """Client for project-scoped email communication endpoints."""
+
+    def _bool_param(self, value: bool | None) -> str | None:
+        if value is None:
+            return None
+        return "true" if value else "false"
+
+    def list_threads(
+        self,
+        project_uuid: str,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        query: str | None = None,
+        status: str | None = None,
+        classification: str | None = None,
+        participant: str | None = None,
+        has_attachments: bool | None = None,
+        has_pending_drafts: bool | None = None,
+        unread: bool | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "GET",
+            self._project_path(project_uuid, "communications", "threads"),
+            params=self._pagination_params(
+                cursor=cursor,
+                limit=limit,
+                query=query,
+                status=status,
+                classification=classification,
+                participant=participant,
+                hasAttachments=self._bool_param(has_attachments),
+                hasPendingDrafts=self._bool_param(has_pending_drafts),
+                unread=self._bool_param(unread),
+            ),
+        )
+
+    def search(
+        self,
+        project_uuid: str,
+        query: str,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        status: str | None = None,
+        classification: str | None = None,
+        participant: str | None = None,
+        has_attachments: bool | None = None,
+        has_pending_drafts: bool | None = None,
+        unread: bool | None = None,
+    ) -> JsonDict:
+        return self.list_threads(
+            project_uuid,
+            cursor=cursor,
+            limit=limit,
+            query=query,
+            status=status,
+            classification=classification,
+            participant=participant,
+            has_attachments=has_attachments,
+            has_pending_drafts=has_pending_drafts,
+            unread=unread,
+        )
+
+    def get_thread(
+        self,
+        project_uuid: str,
+        thread_uuid: str,
+        *,
+        mode: str | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "GET",
+            self._project_path(
+                project_uuid,
+                "communications",
+                "threads",
+                thread_uuid,
+            ),
+            params=self._clean_params(mode=mode),
+        )
+
+    def get(self, project_uuid: str, thread_uuid: str, *, mode: str | None = None) -> JsonDict:
+        return self.get_thread(project_uuid, thread_uuid, mode=mode)
+
+    def send(
+        self,
+        project_uuid: str,
+        *,
+        idempotency_key: str,
+        subject: str,
+        text: str,
+        to: Sequence[str],
+        html: str | None = None,
+        cc: Sequence[str] | None = None,
+        bcc: Sequence[str] | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._project_path(project_uuid, "communications", "threads"),
+            json=self._clean_params(
+                bcc=list(bcc) if bcc is not None else None,
+                bodyHtml=html,
+                bodyText=text,
+                cc=list(cc) if cc is not None else None,
+                idempotencyKey=idempotency_key,
+                subject=subject,
+                to=list(to),
+            ),
+        )
+
+    def reply(
+        self,
+        project_uuid: str,
+        thread_uuid: str,
+        *,
+        idempotency_key: str,
+        text: str,
+        html: str | None = None,
+        subject: str | None = None,
+        to: Sequence[str] | None = None,
+        cc: Sequence[str] | None = None,
+        bcc: Sequence[str] | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._project_path(
+                project_uuid,
+                "communications",
+                "threads",
+                thread_uuid,
+                "reply",
+            ),
+            json=self._clean_params(
+                bcc=list(bcc) if bcc is not None else None,
+                bodyHtml=html,
+                bodyText=text,
+                cc=list(cc) if cc is not None else None,
+                idempotencyKey=idempotency_key,
+                subject=subject,
+                to=list(to) if to is not None else None,
+            ),
+        )
+
+    def invoke(
+        self,
+        project_uuid: str,
+        thread_uuid: str,
+        request: str,
+        *,
+        idempotency_key: str | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._project_path(
+                project_uuid,
+                "communications",
+                "threads",
+                thread_uuid,
+                "invoke",
+            ),
+            json=self._clean_params(
+                idempotencyKey=idempotency_key,
+                request=request,
+            ),
+        )

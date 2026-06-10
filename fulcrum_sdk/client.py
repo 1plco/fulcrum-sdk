@@ -11,6 +11,7 @@ from typing import Any
 import httpx
 
 from fulcrum_sdk._internal.http import DEFAULT_TIMEOUT, create_http_client
+from fulcrum_sdk.communications import CommunicationsResource
 from fulcrum_sdk.dashboard import DashboardResource
 from fulcrum_sdk.exceptions import FulcrumAPIError, FulcrumConfigError
 from fulcrum_sdk.github import GithubResource
@@ -63,6 +64,7 @@ class FulcrumClient:
             or os.environ.get("FULCRUM_RUN_TOKEN")
         )
         self._base_url = resolved_base_url.rstrip("/")
+        self._communications: CommunicationsResource | None = None
         self._max_retries = max(0, max_retries)
         self._retry_delay_seconds = max(0.0, retry_delay_seconds)
         self._timeout = timeout
@@ -93,6 +95,12 @@ class FulcrumClient:
         if self._tickets is None:
             self._tickets = TicketsResource(client=self)
         return self._tickets
+
+    @property
+    def communications(self) -> CommunicationsResource:
+        if self._communications is None:
+            self._communications = CommunicationsResource(client=self)
+        return self._communications
 
     @property
     def projects(self) -> ProjectsResource:

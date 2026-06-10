@@ -11,6 +11,7 @@ Internal (system-level, not for direct use):
 
 from fulcrum_sdk._version import __version__
 from fulcrum_sdk.client import FulcrumClient
+from fulcrum_sdk.communications import CommunicationsResource
 from fulcrum_sdk.dashboard import DashboardResource
 from fulcrum_sdk.errors import FulcrumAPIError, FulcrumConfigError, FulcrumError
 from fulcrum_sdk.github import GithubResource
@@ -31,6 +32,7 @@ from fulcrum_sdk.unfurl_runs import UnfurlRunsResource
 
 __all__ = [
     "DashboardResource",
+    "CommunicationsResource",
     "FulcrumAPIError",
     "FulcrumClient",
     "FulcrumConfigError",

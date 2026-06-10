@@ -4,7 +4,6 @@ import os
 from unittest.mock import patch
 
 import httpx
-import pytest
 import respx
 
 from fulcrum_sdk._internal.improvements.client import (

@@ -7,7 +7,12 @@ import httpx
 import pytest
 import respx
 
-from fulcrum_sdk import FulcrumAPIError, FulcrumClient, TicketsResource
+from fulcrum_sdk import (
+    CommunicationsResource,
+    FulcrumAPIError,
+    FulcrumClient,
+    TicketsResource,
+)
 
 
 def test_client_from_env_reads_runtime_token_and_base_url():
@@ -19,6 +24,7 @@ def test_client_from_env_reads_runtime_token_and_base_url():
     with patch.dict(os.environ, env, clear=True):
         client = FulcrumClient.from_env()
 
+    assert isinstance(client.communications, CommunicationsResource)
     assert isinstance(client.tickets, TicketsResource)
 
 

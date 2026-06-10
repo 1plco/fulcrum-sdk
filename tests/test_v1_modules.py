@@ -4,6 +4,7 @@ import httpx
 import respx
 
 from fulcrum_sdk import (
+    CommunicationsResource,
     DashboardResource,
     FulcrumClient,
     GithubResource,
@@ -24,6 +25,7 @@ from fulcrum_sdk import (
 def test_client_exposes_remaining_v1_resources():
     client = FulcrumClient(base_url="http://test", api_key="token")
 
+    assert isinstance(client.communications, CommunicationsResource)
     assert isinstance(client.project_members, ProjectMembersResource)
     assert isinstance(client.sop_sync, SopSyncResource)
     assert isinstance(client.resources, ResourcesResource)
@@ -42,6 +44,7 @@ def test_client_exposes_remaining_v1_resources():
 def test_expected_route_groups_have_sdk_properties():
     client = FulcrumClient(base_url="http://test", api_key="token")
     route_groups = {
+        "communications": client.communications,
         "dashboard": client.dashboard,
         "github": client.github,
         "improvement-runs": client.improvements,
@@ -59,6 +62,7 @@ def test_expected_route_groups_have_sdk_properties():
     }
 
     assert set(route_groups) == {
+        "communications",
         "dashboard",
         "github",
         "improvement-runs",
