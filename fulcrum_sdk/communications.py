@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Sequence
 
 from fulcrum_sdk._resource import BaseResource
@@ -175,3 +176,91 @@ class CommunicationsResource(BaseResource):
                 request=request,
             ),
         )
+
+    def draft_send(
+        self,
+        project_uuid: str,
+        *,
+        subject: str,
+        text: str,
+        to: Sequence[str],
+        blocking: bool = False,
+        cc: Sequence[str] | None = None,
+        expires_in_days: int | None = None,
+        run_uuid: str | None = None,
+        ticket_uuid: str | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._project_path(project_uuid, "communications", "drafts"),
+            json=self._clean_params(
+                blocking=blocking,
+                bodyText=text,
+                cc=list(cc) if cc is not None else None,
+                expiresInDays=expires_in_days,
+                runUuid=run_uuid,
+                subject=subject,
+                ticketUuid=ticket_uuid,
+                to=list(to),
+            ),
+        )
+
+    def draft_reply(
+        self,
+        project_uuid: str,
+        thread_uuid: str,
+        *,
+        text: str,
+        blocking: bool = False,
+        cc: Sequence[str] | None = None,
+        expires_in_days: int | None = None,
+        run_uuid: str | None = None,
+        subject: str | None = None,
+        ticket_uuid: str | None = None,
+        to: Sequence[str] | None = None,
+    ) -> JsonDict:
+        return self._request(
+            "POST",
+            self._project_path(
+                project_uuid,
+                "communications",
+                "threads",
+                thread_uuid,
+                "drafts",
+            ),
+            json=self._clean_params(
+                blocking=blocking,
+                bodyText=text,
+                cc=list(cc) if cc is not None else None,
+                expiresInDays=expires_in_days,
+                runUuid=run_uuid,
+                subject=subject,
+                ticketUuid=ticket_uuid,
+                to=list(to) if to is not None else None,
+            ),
+        )
+
+    def await_review(
+        self,
+        project_uuid: str,
+        draft_uuid: str,
+        *,
+        interval_seconds: float = 2.0,
+        timeout_seconds: float = 300.0,
+    ) -> JsonDict:
+        deadline = time.monotonic() + timeout_seconds
+        while True:
+            draft = self._request(
+                "GET",
+                self._project_path(
+                    project_uuid,
+                    "communications",
+                    "drafts",
+                    draft_uuid,
+                ),
+            )
+            if draft.get("status") != "pending_review":
+                return draft
+            if time.monotonic() >= deadline:
+                return draft
+            time.sleep(max(0.1, interval_seconds))

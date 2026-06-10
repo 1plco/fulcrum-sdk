@@ -160,3 +160,89 @@ def test_communications_invokes_ticket_from_thread():
         "idempotencyKey": "invoke-1",
         "request": "Reconcile this invoice",
     }
+
+
+@respx.mock
+def test_communications_creates_send_and_reply_drafts():
+    send_route = respx.post(
+        "http://test/api/v1/projects/project-1/communications/drafts"
+    ).mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"draft": {"uuid": "draft-send"}}},
+        )
+    )
+    reply_route = respx.post(
+        "http://test/api/v1/projects/project-1/communications/threads/thread-1/drafts"
+    ).mock(
+        return_value=httpx.Response(
+            201,
+            json={"ok": True, "data": {"draft": {"uuid": "draft-reply"}}},
+        )
+    )
+
+    client = FulcrumClient(base_url="http://test", api_key="token")
+    send_result = client.communications.draft_send(
+        "project-1",
+        blocking=True,
+        cc=["ops@example.com"],
+        expires_in_days=3,
+        run_uuid="run-1",
+        subject="Invoice",
+        text="Please review this invoice.",
+        ticket_uuid="ticket-1",
+        to=["customer@example.com"],
+    )
+    reply_result = client.communications.draft_reply(
+        "project-1",
+        "thread-1",
+        blocking=True,
+        text="Thanks, we will reconcile this.",
+    )
+
+    assert send_result["draft"]["uuid"] == "draft-send"
+    assert json.loads(send_route.calls.last.request.content) == {
+        "blocking": True,
+        "bodyText": "Please review this invoice.",
+        "cc": ["ops@example.com"],
+        "expiresInDays": 3,
+        "runUuid": "run-1",
+        "subject": "Invoice",
+        "ticketUuid": "ticket-1",
+        "to": ["customer@example.com"],
+    }
+    assert reply_result["draft"]["uuid"] == "draft-reply"
+    assert json.loads(reply_route.calls.last.request.content) == {
+        "blocking": True,
+        "bodyText": "Thanks, we will reconcile this.",
+    }
+
+
+@respx.mock
+def test_communications_awaits_draft_review(monkeypatch):
+    route = respx.get(
+        "http://test/api/v1/projects/project-1/communications/drafts/draft-1"
+    ).mock(
+        side_effect=[
+            httpx.Response(
+                200,
+                json={"ok": True, "data": {"status": "pending_review"}},
+            ),
+            httpx.Response(
+                200,
+                json={"ok": True, "data": {"status": "approved_sent"}},
+            ),
+        ]
+    )
+    monkeypatch.setattr("time.sleep", lambda _seconds: None)
+
+    client = FulcrumClient(base_url="http://test", api_key="token")
+    result = client.communications.await_review(
+        "project-1",
+        "draft-1",
+        interval_seconds=0.1,
+        timeout_seconds=1,
+    )
+
+    assert result["status"] == "approved_sent"
+    assert route.call_count == 2
