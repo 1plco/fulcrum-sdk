@@ -2,11 +2,21 @@
 
 from __future__ import annotations
 
+import os
 import time
 from collections.abc import Sequence
 
 from fulcrum_sdk._resource import BaseResource
 from fulcrum_sdk.models import JsonDict
+
+
+def _runtime_run_uuid() -> str | None:
+    """Resolve the current run UUID from the runtime environment."""
+    return (
+        os.environ.get("FULCRUM_TEAM_TICKET_RUN_UUID")
+        or os.environ.get("FULCRUM_RUN_UUID")
+        or None
+    )
 
 
 class CommunicationsResource(BaseResource):
@@ -160,8 +170,14 @@ class CommunicationsResource(BaseResource):
         thread_uuid: str,
         request: str,
         *,
-        idempotency_key: str | None = None,
+        idempotency_key: str,
     ) -> JsonDict:
+        """Create a project ticket from this thread.
+
+        Requires the ``communication.write`` capability, which runtime tokens
+        do not hold; agents should use ``client.tickets.create`` instead.
+        ``idempotency_key`` is required by the server (min 8 chars).
+        """
         return self._request(
             "POST",
             self._project_path(
@@ -173,7 +189,7 @@ class CommunicationsResource(BaseResource):
             ),
             json=self._clean_params(
                 idempotencyKey=idempotency_key,
-                request=request,
+                requestText=request,
             ),
         )
 
@@ -190,6 +206,16 @@ class CommunicationsResource(BaseResource):
         run_uuid: str | None = None,
         ticket_uuid: str | None = None,
     ) -> JsonDict:
+        """Create a reviewable outbound draft (new thread).
+
+        With ``blocking=True`` inside a ticket run, the platform stops this
+        process and pauses the sandbox before responding — the call may never
+        return, and the review outcome arrives in the resume prompt. Without
+        ``run_uuid`` a blocking draft cannot pause anything, so it defaults
+        from the runtime environment.
+        """
+        if blocking and run_uuid is None:
+            run_uuid = _runtime_run_uuid()
         return self._request(
             "POST",
             self._project_path(project_uuid, "communications", "drafts"),
@@ -219,6 +245,16 @@ class CommunicationsResource(BaseResource):
         ticket_uuid: str | None = None,
         to: Sequence[str] | None = None,
     ) -> JsonDict:
+        """Create a reviewable reply draft on an existing thread.
+
+        With ``blocking=True`` inside a ticket run, the platform stops this
+        process and pauses the sandbox before responding — the call may never
+        return, and the review outcome arrives in the resume prompt. Without
+        ``run_uuid`` a blocking draft cannot pause anything, so it defaults
+        from the runtime environment.
+        """
+        if blocking and run_uuid is None:
+            run_uuid = _runtime_run_uuid()
         return self._request(
             "POST",
             self._project_path(
@@ -248,6 +284,13 @@ class CommunicationsResource(BaseResource):
         interval_seconds: float = 2.0,
         timeout_seconds: float = 300.0,
     ) -> JsonDict:
+        """Poll a NON-blocking draft until review completes or timeout.
+
+        Never pair this with ``blocking=True`` inside a ticket run: blocking
+        drafts kill the calling process and deliver their outcome via the
+        resume prompt, so the poll line is unreachable. On timeout the
+        still-pending draft is returned unchanged.
+        """
         deadline = time.monotonic() + timeout_seconds
         while True:
             draft = self._request(

@@ -156,9 +156,11 @@ def test_communications_invokes_ticket_from_thread():
     )
 
     assert result == {"ticketUuid": "ticket-1"}
+    # Wire contract: the server schema requires requestText (the `request`
+    # key would be stripped by zod and the call would 400).
     assert json.loads(route.calls.last.request.content) == {
         "idempotencyKey": "invoke-1",
-        "request": "Reconcile this invoice",
+        "requestText": "Reconcile this invoice",
     }
 
 
